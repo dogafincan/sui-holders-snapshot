@@ -16,10 +16,23 @@ The script queries Sui GraphQL and aggregates all live `Coin<T>` objects by owne
 node holders-snapshot.js 0x2::sui::SUI
 ```
 
+Airdrop mode:
+
+```bash
+node holders-snapshot.js 0x2::sui::SUI --airdrop 1000000 \
+  --exclude 0x0000000000000000000000000000000000000000000000000000000000000000
+```
+
 ## Usage
 
 ```bash
 node holders-snapshot.js <PACKAGE::MODULE::TOKEN>
+```
+
+With airdrop allocation:
+
+```bash
+node holders-snapshot.js <PACKAGE::MODULE::TOKEN> --airdrop <AMOUNT> [--exclude <ADDRESS> ...]
 ```
 
 Important:
@@ -27,6 +40,8 @@ Important:
 - Pass the coin address (for example `0x2::sui::SUI`).
 - The endpoint is fixed to `https://graphql.mainnet.sui.io/graphql`.
 - The output is always written to `holders.csv` in your current directory.
+- `--airdrop` is optional. When provided, an `airdrop_amount` column is added.
+- `--exclude` is repeatable and only applies when `--airdrop` is set.
 
 ## Output Format
 
@@ -35,6 +50,7 @@ CSV columns:
 - `rank`
 - `address`
 - `balance` (formatted using on-chain coin decimals)
+- `airdrop_amount` (only when `--airdrop` is provided)
 
 ## Notes
 
