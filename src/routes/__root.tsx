@@ -38,10 +38,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <div className="relative isolate min-h-screen overflow-x-hidden">
-          <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(circle_at_top,_rgba(44,122,123,0.18),_transparent_65%)]" />
-          {children}
-        </div>
+        {children}
         <Toaster position="top-right" richColors closeButton />
         <TanStackDevtools
           config={{

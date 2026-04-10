@@ -1,14 +1,5 @@
 import { startTransition, useState, type FormEvent } from "react"
-import {
-  Coins,
-  Database,
-  Download,
-  LoaderCircle,
-  PackageSearch,
-  ShieldCheck,
-  Sparkles,
-  WalletCards,
-} from "lucide-react"
+import { Download, LoaderCircle, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 import { HoldersTable } from "@/components/holders-table"
@@ -22,9 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -63,32 +58,25 @@ function downloadSnapshot(snapshot: SnapshotResult) {
   URL.revokeObjectURL(url)
 }
 
-function MetricCard({
+function SummaryCard({
   label,
   value,
-  hint,
-  icon: Icon,
+  description,
 }: {
   label: string
   value: string
-  hint: string
-  icon: typeof WalletCards
+  description: string
 }) {
   return (
-    <Card className="border-border/70 bg-background/90">
-      <CardHeader className="border-b border-border/60">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <CardDescription>{label}</CardDescription>
-            <CardTitle className="mt-1 text-2xl tabular-nums">{value}</CardTitle>
-          </div>
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Icon />
-          </div>
-        </div>
+    <Card size="sm">
+      <CardHeader>
+        <CardDescription>{label}</CardDescription>
+        <CardTitle className="text-2xl font-semibold tracking-tight tabular-nums">
+          {value}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">{hint}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   )
@@ -98,12 +86,12 @@ function ResultsSkeleton() {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Skeleton className="h-32 rounded-3xl" />
-        <Skeleton className="h-32 rounded-3xl" />
-        <Skeleton className="h-32 rounded-3xl" />
-        <Skeleton className="h-32 rounded-3xl" />
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
       </div>
-      <Skeleton className="h-[28rem] rounded-3xl" />
+      <Skeleton className="h-[28rem]" />
     </div>
   )
 }
@@ -120,8 +108,6 @@ export function SnapshotWorkbench({
   const [formError, setFormError] = useState<string | null>(null)
   const [requestError, setRequestError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const isBusy = isSubmitting
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -169,104 +155,78 @@ export function SnapshotWorkbench({
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-      <section className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-card/95 px-6 py-8 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.55)] sm:px-8">
-        <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,_rgba(44,122,123,0.18),_transparent_58%)] lg:block" />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <Badge variant="secondary" className="mb-4">
-              Stateless Cloudflare Worker
-            </Badge>
-            <h1 className="max-w-2xl text-4xl leading-none font-heading tracking-[-0.06em] text-foreground sm:text-5xl">
-              Snapshot Sui token holders and model proportional airdrops in one run.
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Enter any Sui coin type, optionally exclude treasury or burn addresses,
-              and get a ranked holder table plus a CSV export without storing anything
-              on the server.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-border/60 bg-background/80 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                Execution
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">
-                Direct request flow
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/60 bg-background/80 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                Output
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">
-                Full TanStack Table + CSV
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/60 bg-background/80 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                Infra
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">
-                TanStack Start on Workers
-              </p>
-            </div>
-          </div>
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+      <header className="flex flex-col gap-3">
+        <Badge variant="outline" className="w-fit">
+          Cloudflare Worker
+        </Badge>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Sui holders snapshot
+          </h1>
+          <p className="max-w-3xl text-muted-foreground">
+            Run a live holder snapshot, model a proportional airdrop, then export
+            the same ranked rows to CSV.
+          </p>
         </div>
-      </section>
+      </header>
 
-      <section className="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
-        <Card className="h-fit border-border/70 bg-card/95 xl:sticky xl:top-6">
-          <CardHeader className="border-b border-border/60">
-            <CardTitle className="text-2xl tracking-[-0.04em]">
-              Snapshot parameters
-            </CardTitle>
+      <section className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+        <Card className="h-fit lg:sticky lg:top-6">
+          <CardHeader>
+            <CardTitle>Snapshot parameters</CardTitle>
             <CardDescription>
-              Exclusions accept commas, spaces, or line breaks. Inputs are normalized
-              to canonical Sui addresses before the request is sent.
+              Exclusions accept commas, spaces, or line breaks. Addresses are
+              normalized before the request is sent.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="coin-address">Coin address</Label>
-                <Input
-                  id="coin-address"
-                  value={coinAddress}
-                  onChange={(event) => setCoinAddress(event.target.value)}
-                  placeholder="0x2::sui::SUI"
-                  autoComplete="off"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Format: <code>0xPACKAGE::MODULE::TOKEN</code>
-                </p>
-              </div>
+            <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="coin-address">Coin address</FieldLabel>
+                  <FieldDescription>
+                    Use the format <code>0xPACKAGE::MODULE::TOKEN</code>.
+                  </FieldDescription>
+                  <Input
+                    id="coin-address"
+                    value={coinAddress}
+                    onChange={(event) => setCoinAddress(event.target.value)}
+                    placeholder="0x2::sui::SUI"
+                    autoComplete="off"
+                  />
+                </Field>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="airdrop-amount">Airdrop amount</Label>
-                <Input
-                  id="airdrop-amount"
-                  value={airdropAmount}
-                  onChange={(event) => setAirdropAmount(event.target.value)}
-                  placeholder="1000000"
-                  autoComplete="off"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Leave empty to run a pure holder snapshot with no allocation column.
-                </p>
-              </div>
+                <Field>
+                  <FieldLabel htmlFor="airdrop-amount">Airdrop amount</FieldLabel>
+                  <FieldDescription>
+                    Leave this empty to run a balance-only snapshot.
+                  </FieldDescription>
+                  <Input
+                    id="airdrop-amount"
+                    value={airdropAmount}
+                    onChange={(event) => setAirdropAmount(event.target.value)}
+                    placeholder="1000000"
+                    autoComplete="off"
+                  />
+                </Field>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="excluded-addresses">Excluded addresses</Label>
-                <Textarea
-                  id="excluded-addresses"
-                  value={excludedAddressText}
-                  onChange={(event) => setExcludedAddressText(event.target.value)}
-                  placeholder={"0x0000...\n0x1234..."}
-                  className="min-h-40"
-                />
-              </div>
+                <Field>
+                  <FieldLabel htmlFor="excluded-addresses">
+                    Excluded addresses
+                  </FieldLabel>
+                  <FieldDescription>
+                    Only used when airdrop mode is enabled.
+                  </FieldDescription>
+                  <Textarea
+                    id="excluded-addresses"
+                    value={excludedAddressText}
+                    onChange={(event) => setExcludedAddressText(event.target.value)}
+                    placeholder={"0x0000...\n0x1234..."}
+                    className="min-h-32"
+                  />
+                </Field>
+              </FieldGroup>
 
               {formError ? (
                 <Alert variant="destructive">
@@ -278,14 +238,14 @@ export function SnapshotWorkbench({
 
               {requestError ? (
                 <Alert variant="destructive">
-                  <PackageSearch />
+                  <Sparkles />
                   <AlertTitle>Snapshot failed</AlertTitle>
                   <AlertDescription>{requestError}</AlertDescription>
                 </Alert>
               ) : null}
 
-              <Button type="submit" size="lg" disabled={isBusy}>
-                {isBusy ? (
+              <Button type="submit" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <>
                     <LoaderCircle className="animate-spin" data-icon="inline-start" />
                     Running snapshot
@@ -305,78 +265,81 @@ export function SnapshotWorkbench({
           {snapshot ? (
             <>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <MetricCard
+                <SummaryCard
                   label="Holders"
                   value={formatInteger(snapshot.meta.holderCount)}
-                  hint="All live Coin<T> objects aggregated by owner address."
-                  icon={WalletCards}
+                  description="All live Coin<T> objects aggregated by owner address."
                 />
-                <MetricCard
+                <SummaryCard
                   label="Total balance"
                   value={snapshot.meta.totalBalance}
-                  hint={`Coin decimals: ${snapshot.meta.decimals}`}
-                  icon={Coins}
+                  description={`Coin decimals: ${snapshot.meta.decimals}`}
                 />
-                <MetricCard
+                <SummaryCard
                   label="Eligible holders"
                   value={formatInteger(snapshot.meta.eligibleHolderCount)}
-                  hint={`${formatInteger(snapshot.meta.exclusionCount)} excluded address${snapshot.meta.exclusionCount === 1 ? "" : "es"}`}
-                  icon={ShieldCheck}
+                  description={`${formatInteger(snapshot.meta.exclusionCount)} excluded address${snapshot.meta.exclusionCount === 1 ? "" : "es"}`}
                 />
-                <MetricCard
+                <SummaryCard
                   label="Airdrop mode"
                   value={
                     snapshot.meta.airdropEnabled
                       ? snapshot.meta.totalAirdropAmount ?? "Enabled"
                       : "Off"
                   }
-                  hint={
+                  description={
                     snapshot.meta.airdropEnabled
                       ? "Proportional allocation with remainder assigned to the top eligible holder."
                       : "Balance-only snapshot with CSV export."
                   }
-                  icon={Database}
                 />
               </div>
 
-              <Card className="border-border/70 bg-card/95">
-                <CardHeader className="border-b border-border/60">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary">
-                          {snapshot.meta.airdropEnabled ? "Airdrop allocation" : "Holder snapshot"}
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge
+                          variant={
+                            snapshot.meta.airdropEnabled ? "default" : "secondary"
+                          }
+                        >
+                          {snapshot.meta.airdropEnabled
+                            ? "Airdrop allocation"
+                            : "Holder snapshot"}
                         </Badge>
                         <Badge variant="outline">
                           {endpointHost(snapshot.meta.endpoint)}
                         </Badge>
                       </div>
-                      <CardTitle className="mt-3 text-2xl tracking-[-0.04em]">
-                        Snapshot results
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        TanStack Table renders the full dataset client-side so you can
-                        sort, filter, paginate, and export without rerunning the Worker.
-                      </CardDescription>
+                      <div className="flex flex-col gap-1">
+                        <CardTitle>Snapshot results</CardTitle>
+                        <CardDescription>
+                          Filter, sort, paginate, and export the current response
+                          without rerunning the Worker.
+                        </CardDescription>
+                      </div>
                     </div>
-                    <Button type="button" variant="outline" size="lg" onClick={handleDownload}>
+
+                    <Button type="button" variant="outline" onClick={handleDownload}>
                       <Download data-icon="inline-start" />
                       Download CSV
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                    <span>
-                      Coin type:{" "}
-                      <code className="text-foreground">{snapshot.meta.coinAddress}</code>
-                    </span>
-                    <Separator orientation="vertical" className="hidden h-5 sm:block" />
-                    <span>
-                      Endpoint:{" "}
-                      <code className="text-foreground">{snapshot.meta.endpoint}</code>
-                    </span>
+                  <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                    <p>
+                      <span className="font-medium text-foreground">Coin type:</span>{" "}
+                      <code className="font-mono">{snapshot.meta.coinAddress}</code>
+                    </p>
+                    <p>
+                      <span className="font-medium text-foreground">Endpoint:</span>{" "}
+                      <code className="font-mono">{snapshot.meta.endpoint}</code>
+                    </p>
                   </div>
+
                   <HoldersTable
                     rows={snapshot.rows}
                     showAirdrop={snapshot.meta.airdropEnabled}
@@ -384,46 +347,45 @@ export function SnapshotWorkbench({
                 </CardContent>
               </Card>
             </>
-          ) : isBusy ? (
+          ) : isSubmitting ? (
             <ResultsSkeleton />
           ) : (
-            <Card className="border-border/70 bg-card/95">
-              <CardHeader className="border-b border-border/60">
-                <CardTitle className="text-2xl tracking-[-0.04em]">
-                  Ready to run
-                </CardTitle>
+            <Card>
+              <CardHeader>
+                <CardTitle>Ready to run</CardTitle>
                 <CardDescription>
                   Start with <code>0x2::sui::SUI</code> to validate the pipeline, or
-                  paste your own coin type to inspect a different asset.
+                  paste your own coin type to inspect another asset.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                  <p className="text-sm font-medium text-foreground">
-                    1. Normalize inputs
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Coin types and excluded addresses are canonicalized before the
-                    Worker touches Sui GraphQL.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                  <p className="text-sm font-medium text-foreground">
-                    2. Aggregate holders
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    The Worker pages every live <code>Coin&lt;T&gt;</code> object and
-                    sums balances by owner address.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                  <p className="text-sm font-medium text-foreground">
-                    3. Explore the result
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Review the ranked table in-browser, then export the same rows to CSV.
-                  </p>
-                </div>
+                <Card size="sm">
+                  <CardHeader>
+                    <CardTitle>Normalize inputs</CardTitle>
+                    <CardDescription>
+                      Coin types and excluded addresses are canonicalized before the
+                      Worker calls Sui GraphQL.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card size="sm">
+                  <CardHeader>
+                    <CardTitle>Aggregate holders</CardTitle>
+                    <CardDescription>
+                      The Worker pages every live <code>Coin&lt;T&gt;</code> object and
+                      sums balances by owner address.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card size="sm">
+                  <CardHeader>
+                    <CardTitle>Explore the result</CardTitle>
+                    <CardDescription>
+                      Review the ranked table in the browser, then export the same
+                      rows to CSV.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
               </CardContent>
             </Card>
           )}

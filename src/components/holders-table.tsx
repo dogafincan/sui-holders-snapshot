@@ -18,10 +18,14 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Search,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Field,
+  FieldDescription,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -56,13 +60,7 @@ function SortButton({
   onClick: () => void
 }) {
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      className="-ml-2 h-auto px-2 py-1 font-medium"
-      onClick={onClick}
-    >
+    <Button type="button" variant="ghost" size="sm" onClick={onClick}>
       {label}
       {sorted === "asc" ? (
         <ArrowUp data-icon="inline-end" />
@@ -79,11 +77,9 @@ export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
   const columns: ColumnDef<SnapshotRow>[] = [
     {
       accessorKey: "rank",
-      header: () => <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Rank</span>,
+      header: "Rank",
       cell: ({ row }) => (
-        <span className="font-medium tabular-nums text-foreground">
-          {row.original.rank}
-        </span>
+        <span className="font-medium tabular-nums">{row.original.rank}</span>
       ),
       enableSorting: false,
       size: 64,
@@ -97,11 +93,7 @@ export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         />
       ),
-      cell: ({ row }) => (
-        <code className="text-xs text-muted-foreground sm:text-[0.8rem]">
-          {row.original.address}
-        </code>
-      ),
+      cell: ({ row }) => <code className="font-mono">{row.original.address}</code>,
       filterFn: (row, columnId, value) => {
         const haystack = String(row.getValue(columnId)).toLowerCase()
         return haystack.includes(String(value).toLowerCase())
@@ -119,7 +111,7 @@ export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="text-right font-medium tabular-nums text-foreground">
+        <div className="text-right font-medium tabular-nums">
           {row.original.balance}
         </div>
       ),
@@ -140,7 +132,7 @@ export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="text-right font-medium tabular-nums text-foreground">
+        <div className="text-right font-medium tabular-nums">
           {row.original.airdropAmount ?? "0"}
         </div>
       ),
@@ -204,83 +196,80 @@ export function HoldersTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-background/80 p-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-medium text-foreground">
-            Holder distribution
-          </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-1">
+          <p className="font-medium">Holder distribution</p>
           <p className="text-sm text-muted-foreground">
             {filteredRows} visible holder{filteredRows === 1 ? "" : "s"} across{" "}
             {table.getPageCount()} page{table.getPageCount() === 1 ? "" : "s"}.
           </p>
         </div>
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+
+        <Field className="w-full lg:max-w-sm">
+          <FieldLabel htmlFor="holders-filter">Filter by address</FieldLabel>
+          <FieldDescription>
+            Client-side filtering across the current snapshot payload.
+          </FieldDescription>
           <Input
+            id="holders-filter"
             value={addressFilterInput}
             onChange={(event) => setAddressFilterInput(event.target.value)}
-            className="pl-9"
-            placeholder="Filter by holder address"
+            placeholder="0x..."
             aria-label="Filter holder table by address"
           />
-        </div>
+        </Field>
       </div>
 
-      <div className="rounded-2xl border border-border/70 bg-background/90">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className={
-                      header.column.id === "rawBalance" ||
-                      header.column.id === "rawAirdropAmount"
-                        ? "text-right"
-                        : undefined
-                    }
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  className={
+                    header.column.id === "rawBalance" ||
+                    header.column.id === "rawAirdropAmount"
+                      ? "text-right"
+                      : undefined
+                  }
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.length > 0 ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
                 ))}
               </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={showAirdrop ? 4 : 3}
-                  className="py-10 text-center text-sm text-muted-foreground"
-                >
-                  No holders match the current address filter.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={showAirdrop ? 4 : 3}
+                className="py-10 text-center text-muted-foreground"
+              >
+                No holders match the current address filter.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-background/80 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Page{" "}
           <span className="font-medium text-foreground">
