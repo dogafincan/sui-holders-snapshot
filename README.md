@@ -28,7 +28,11 @@ Output:
 
 - TanStack Start
 - Cloudflare Workers via `@cloudflare/vite-plugin`
-- shadcn/ui + Tailwind CSS v4
+- shadcn/ui on Base UI primitives
+- preset `b1aIaos55` on `base-luma`
+- Tailwind CSS v4
+- Inter variable font
+- Hugeicons for preset-managed UI icons
 - TanStack Table
 - Vitest
 
@@ -37,6 +41,7 @@ Output:
 - `src/routes/index.tsx`: route entrypoint for `/`
 - `src/components/snapshot-workbench.tsx`: form, loading states, summary cards, download action
 - `src/components/holders-table.tsx`: TanStack Table configuration, sorting, filtering, pagination
+- `src/components/ui/field.tsx`: shadcn field composition used for form layout
 - `src/lib/sui-snapshot.server.ts`: Sui GraphQL execution and aggregation
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
 - `src/lib/sui-snapshot.ts`: shared validation, formatting, CSV, and allocation helpers
@@ -117,6 +122,9 @@ npm run build
 ## Notes
 
 - The app is stateless and public by design. No D1, KV, R2, or background jobs.
+- The UI is intentionally constrained to stock shadcn `base-luma` styling with the
+  applied preset. Layout changes are fine; avoid custom decorative styling that
+  fights the preset.
 - Snapshot accuracy matches the original script: it reflects live state while the
   Worker pages through results, so balances can drift slightly during execution.
 - For checkpoint-perfect accounting, use an indexer over Sui checkpoints instead of

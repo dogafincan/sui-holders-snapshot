@@ -20,8 +20,11 @@ Core behavior:
 - TanStack Router
 - TanStack Table
 - React 19
-- shadcn/ui
+- shadcn/ui on Base UI primitives
+- shadcn preset `b1aIaos55` on `base-luma`
 - Tailwind CSS v4
+- Inter variable font
+- Hugeicons for preset-managed icons
 - Cloudflare Workers via `@cloudflare/vite-plugin`
 - Vitest
 
@@ -30,6 +33,7 @@ Core behavior:
 - `src/routes/index.tsx`: app entry route
 - `src/components/snapshot-workbench.tsx`: main page UI and form workflow
 - `src/components/holders-table.tsx`: TanStack Table setup and client-side table behavior
+- `src/components/ui/field.tsx`: shadcn field composition for form structure
 - `src/lib/sui-snapshot.server.ts`: server-side snapshot execution
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
 - `src/lib/sui-snapshot.ts`: shared validation, formatting, CSV, and allocation helpers
@@ -92,6 +96,9 @@ aligned with `wrangler.jsonc`.
   easy to unit test.
 - Prefer keeping Cloudflare-specific runtime code in server-only modules.
 - Use existing shadcn components before introducing custom primitives.
+- Preserve the current visual contract: stock shadcn `base-luma` styling with the
+  applied preset, Inter, and Base UI primitives. Layout work is fine; avoid
+  decorative custom styling that overrides the preset look.
 
 ## Testing Expectations
 
