@@ -1,0 +1,319 @@
+import { useDeferredValue, useEffect, useState } from "react"
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type PaginationState,
+  type SortingFn,
+  type SortingState,
+} from "@tanstack/react-table"
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+} from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import type { SnapshotRow } from "@/lib/sui-snapshot"
+
+export const HOLDERS_TABLE_PAGE_SIZE = 25
+
+const bigintSorting: SortingFn<SnapshotRow> = (left, right, columnId) => {
+  const leftValue = BigInt(String(left.getValue(columnId) ?? "0"))
+  const rightValue = BigInt(String(right.getValue(columnId) ?? "0"))
+
+  if (leftValue === rightValue) {
+    return 0
+  }
+
+  return leftValue > rightValue ? 1 : -1
+}
+
+function SortButton({
+  label,
+  sorted,
+  onClick,
+}: {
+  label: string
+  sorted: false | "asc" | "desc"
+  onClick: () => void
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="-ml-2 h-auto px-2 py-1 font-medium"
+      onClick={onClick}
+    >
+      {label}
+      {sorted === "asc" ? (
+        <ArrowUp data-icon="inline-end" />
+      ) : sorted === "desc" ? (
+        <ArrowDown data-icon="inline-end" />
+      ) : (
+        <ArrowUpDown data-icon="inline-end" />
+      )}
+    </Button>
+  )
+}
+
+export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
+  const columns: ColumnDef<SnapshotRow>[] = [
+    {
+      accessorKey: "rank",
+      header: () => <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Rank</span>,
+      cell: ({ row }) => (
+        <span className="font-medium tabular-nums text-foreground">
+          {row.original.rank}
+        </span>
+      ),
+      enableSorting: false,
+      size: 64,
+    },
+    {
+      accessorKey: "address",
+      header: ({ column }) => (
+        <SortButton
+          label="Holder"
+          sorted={column.getIsSorted()}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        />
+      ),
+      cell: ({ row }) => (
+        <code className="text-xs text-muted-foreground sm:text-[0.8rem]">
+          {row.original.address}
+        </code>
+      ),
+      filterFn: (row, columnId, value) => {
+        const haystack = String(row.getValue(columnId)).toLowerCase()
+        return haystack.includes(String(value).toLowerCase())
+      },
+    },
+    {
+      accessorKey: "rawBalance",
+      header: ({ column }) => (
+        <div className="flex justify-end">
+          <SortButton
+            label="Balance"
+            sorted={column.getIsSorted()}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-right font-medium tabular-nums text-foreground">
+          {row.original.balance}
+        </div>
+      ),
+      sortingFn: bigintSorting,
+    },
+  ]
+
+  if (showAirdrop) {
+    columns.push({
+      accessorKey: "rawAirdropAmount",
+      header: ({ column }) => (
+        <div className="flex justify-end">
+          <SortButton
+            label="Airdrop"
+            sorted={column.getIsSorted()}
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-right font-medium tabular-nums text-foreground">
+          {row.original.airdropAmount ?? "0"}
+        </div>
+      ),
+      sortingFn: bigintSorting,
+    })
+  }
+
+  return columns
+}
+
+export function HoldersTable({
+  rows,
+  showAirdrop,
+}: {
+  rows: SnapshotRow[]
+  showAirdrop: boolean
+}) {
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "rawBalance", desc: true },
+  ])
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: HOLDERS_TABLE_PAGE_SIZE,
+  })
+  const [addressFilterInput, setAddressFilterInput] = useState("")
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+
+  const deferredAddressFilter = useDeferredValue(addressFilterInput)
+
+  useEffect(() => {
+    setColumnFilters(
+      deferredAddressFilter
+        ? [{ id: "address", value: deferredAddressFilter.trim().toLowerCase() }]
+        : [],
+    )
+    setPagination((current) => ({ ...current, pageIndex: 0 }))
+  }, [deferredAddressFilter])
+
+  useEffect(() => {
+    setPagination((current) => ({ ...current, pageIndex: 0 }))
+  }, [rows])
+
+  const table = useReactTable({
+    data: rows,
+    columns: createColumns(showAirdrop),
+    state: {
+      sorting,
+      pagination,
+      columnFilters,
+    },
+    onSortingChange: setSorting,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getRowId: (row) => row.address,
+  })
+
+  const filteredRows = table.getFilteredRowModel().rows.length
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-background/80 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            Holder distribution
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {filteredRows} visible holder{filteredRows === 1 ? "" : "s"} across{" "}
+            {table.getPageCount()} page{table.getPageCount() === 1 ? "" : "s"}.
+          </p>
+        </div>
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={addressFilterInput}
+            onChange={(event) => setAddressFilterInput(event.target.value)}
+            className="pl-9"
+            placeholder="Filter by holder address"
+            aria-label="Filter holder table by address"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border/70 bg-background/90">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className={
+                      header.column.id === "rawBalance" ||
+                      header.column.id === "rawAirdropAmount"
+                        ? "text-right"
+                        : undefined
+                    }
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={showAirdrop ? 4 : 3}
+                  className="py-10 text-center text-sm text-muted-foreground"
+                >
+                  No holders match the current address filter.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-background/80 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Page{" "}
+          <span className="font-medium text-foreground">
+            {table.getState().pagination.pageIndex + 1}
+          </span>{" "}
+          of{" "}
+          <span className="font-medium text-foreground">
+            {Math.max(table.getPageCount(), 1)}
+          </span>
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            <ChevronLeft data-icon="inline-start" />
+            Previous
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+            <ChevronRight data-icon="inline-end" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
