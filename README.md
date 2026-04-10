@@ -39,8 +39,9 @@ Output:
 ## Project Structure
 
 - `src/routes/index.tsx`: route entrypoint for `/`
-- `src/components/snapshot-workbench.tsx`: form, loading states, summary cards, download action
-- `src/components/holders-table.tsx`: TanStack Table configuration, sorting, filtering, pagination
+- `src/routes/__root.tsx`: top bar and inset workspace shell
+- `src/components/snapshot-workbench.tsx`: operations rail, preview dashboard, loading states, and live results module
+- `src/components/holders-table.tsx`: TanStack Table configuration plus shared preview/live table surfaces
 - `src/components/ui/field.tsx`: shadcn field composition used for form layout
 - `src/lib/sui-snapshot.server.ts`: Sui GraphQL execution and aggregation
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
@@ -125,6 +126,9 @@ npm run build
 - The UI is intentionally constrained to stock shadcn `base-luma` styling with the
   applied preset. Layout changes are fine; avoid custom decorative styling that
   fights the preset.
+- The current desktop composition is an app shell with an operations rail on the
+  left and a stable workspace on the right. Empty, loading, and loaded states
+  should keep the same overall structure instead of switching to unrelated layouts.
 - Snapshot accuracy matches the original script: it reflects live state while the
   Worker pages through results, so balances can drift slightly during execution.
 - For checkpoint-perfect accounting, use an indexer over Sui checkpoints instead of

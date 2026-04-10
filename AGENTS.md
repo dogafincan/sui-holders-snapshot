@@ -31,8 +31,9 @@ Core behavior:
 ## Important Files
 
 - `src/routes/index.tsx`: app entry route
-- `src/components/snapshot-workbench.tsx`: main page UI and form workflow
-- `src/components/holders-table.tsx`: TanStack Table setup and client-side table behavior
+- `src/routes/__root.tsx`: top bar and inset workspace shell
+- `src/components/snapshot-workbench.tsx`: operations rail, preview dashboard, and live results workspace
+- `src/components/holders-table.tsx`: shared preview/live table module with sorting, filtering, and pagination
 - `src/components/ui/field.tsx`: shadcn field composition for form structure
 - `src/lib/sui-snapshot.server.ts`: server-side snapshot execution
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
@@ -99,6 +100,9 @@ aligned with `wrangler.jsonc`.
 - Preserve the current visual contract: stock shadcn `base-luma` styling with the
   applied preset, Inter, and Base UI primitives. Layout work is fine; avoid
   decorative custom styling that overrides the preset look.
+- Preserve the current page composition: compact app shell, sticky left rail, and
+  a stable right-side workspace that remains structurally consistent across preview,
+  loading, and loaded states.
 
 ## Testing Expectations
 
