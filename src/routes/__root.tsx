@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
-import { TanStackDevtools } from "@tanstack/react-devtools"
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
+// import { TanStackDevtools } from "@tanstack/react-devtools"
+// import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 
 import { Toaster } from "@/components/ui/sonner"
 
@@ -40,6 +40,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body className="bg-background">
         {children}
         <Toaster position="top-right" richColors closeButton />
+        {/*
         <TanStackDevtools
           config={{
             position: "bottom-right",
@@ -51,6 +52,7 @@ function RootDocument({ children }: { children: ReactNode }) {
             },
           ]}
         />
+        */}
         <Scripts />
       </body>
     </html>
