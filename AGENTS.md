@@ -31,9 +31,9 @@ Core behavior:
 ## Important Files
 
 - `src/routes/index.tsx`: app entry route
-- `src/routes/__root.tsx`: top bar and inset workspace shell
-- `src/components/snapshot-workbench.tsx`: operations rail, preview dashboard, and live results workspace
-- `src/components/holders-table.tsx`: shared preview/live table module with sorting, filtering, and pagination
+- `src/routes/__root.tsx`: root document and global app shell
+- `src/components/snapshot-workbench.tsx`: page layout, form workflow, loading states, and results card
+- `src/components/holders-table.tsx`: live table module with sorting, filtering, and pagination
 - `src/components/ui/field.tsx`: shadcn field composition for form structure
 - `src/lib/sui-snapshot.server.ts`: server-side snapshot execution
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
@@ -98,11 +98,8 @@ aligned with `wrangler.jsonc`.
 - Prefer keeping Cloudflare-specific runtime code in server-only modules.
 - Use existing shadcn components before introducing custom primitives.
 - Preserve the current visual contract: stock shadcn `base-luma` styling with the
-  applied preset, Inter, and Base UI primitives. Layout work is fine; avoid
-  decorative custom styling that overrides the preset look.
-- Preserve the current page composition: compact app shell, sticky left rail, and
-  a stable right-side workspace that remains structurally consistent across preview,
-  loading, and loaded states.
+  applied preset, Inter, and Base UI primitives. Prefer minimal layout classes and
+  avoid custom shells, decorative chrome, or bespoke visual styling.
 
 ## Testing Expectations
 
