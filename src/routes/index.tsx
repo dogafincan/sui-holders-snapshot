@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Run Sui token holder snapshots, model proportional airdrops, and export ranked CSV results from a Cloudflare Worker.",
+          "Run Sui token holder snapshots, model proportional airdrops, and export ranked CSV results on demand.",
       },
     ],
   }),

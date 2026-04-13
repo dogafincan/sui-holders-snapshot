@@ -43,14 +43,6 @@ function formatInteger(value: number) {
   return new Intl.NumberFormat("en-US").format(value)
 }
 
-function endpointHost(endpoint: string) {
-  try {
-    return new URL(endpoint).hostname
-  } catch {
-    return endpoint
-  }
-}
-
 function downloadSnapshot(snapshot: SnapshotResult) {
   const download = buildSnapshotDownload(snapshot)
   const blob = new Blob([download.csv], { type: "text/csv" })
@@ -127,7 +119,7 @@ function EmptyState() {
           <CardHeader>
             <CardTitle>Live snapshot</CardTitle>
             <CardDescription>
-              Query Sui GraphQL and aggregate every live <code>Coin&lt;T&gt;</code> object by owner.
+              Scan the current holder set and aggregate balances by owner address.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -213,9 +205,6 @@ export function SnapshotWorkbench({
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
-        <Badge variant="outline" className="w-fit">
-          Cloudflare Worker
-        </Badge>
         <h1 className="text-3xl font-semibold tracking-tight">
           Sui holders snapshot
         </h1>
@@ -320,7 +309,7 @@ export function SnapshotWorkbench({
                 <SummaryCard
                   label="Holders"
                   value={formatInteger(snapshot.meta.holderCount)}
-                  description="All live Coin<T> objects aggregated by owner address."
+                  description="All balances aggregated by owner address."
                 />
                 <SummaryCard
                   label="Total balance"
@@ -361,17 +350,13 @@ export function SnapshotWorkbench({
                             ? "Airdrop allocation"
                             : "Holder snapshot"}
                         </Badge>
-                        <Badge variant="outline">
-                          {endpointHost(snapshot.meta.endpoint)}
-                        </Badge>
                       </div>
                       <CardTitle>Snapshot results</CardTitle>
                       <CardDescription>
-                        <span className="font-medium text-foreground">Coin:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Coin type:
+                        </span>{" "}
                         <code className="font-mono">{snapshot.meta.coinAddress}</code>
-                        <br />
-                        <span className="font-medium text-foreground">Endpoint:</span>{" "}
-                        <code className="font-mono">{snapshot.meta.endpoint}</code>
                       </CardDescription>
                     </div>
 
