@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useServerFn } from "@tanstack/react-start"
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 
-import { SnapshotWorkbench } from "@/components/snapshot-workbench"
-import { runSnapshot } from "@/lib/sui-snapshot.functions"
+import { SnapshotWorkbench } from "@/components/snapshot-workbench";
+import { runSnapshot } from "@/lib/sui-snapshot.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,10 +18,10 @@ export const Route = createFileRoute("/")({
     ],
   }),
   component: IndexRoute,
-})
+});
 
 function IndexRoute() {
-  const runSnapshotFn = useServerFn(runSnapshot)
+  const runSnapshotFn = useServerFn(runSnapshot);
 
-  return <SnapshotWorkbench runSnapshot={runSnapshotFn} />
+  return <SnapshotWorkbench runSnapshot={runSnapshotFn} />;
 }

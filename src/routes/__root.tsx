@@ -1,11 +1,11 @@
-import type { ReactNode } from "react"
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
+import type { ReactNode } from "react";
+import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 // import { TanStackDevtools } from "@tanstack/react-devtools"
 // import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/sonner";
 
-import appCss from "../styles.css?url"
+import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -29,7 +29,7 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
-})
+});
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
@@ -56,5 +56,5 @@ function RootDocument({ children }: { children: ReactNode }) {
         <Scripts />
       </body>
     </html>
-  )
+  );
 }

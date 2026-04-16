@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useState } from "react"
+import { useDeferredValue, useEffect, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -11,22 +11,12 @@ import {
   type PaginationState,
   type SortingFn,
   type SortingState,
-} from "@tanstack/react-table"
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react"
+} from "@tanstack/react-table";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldDescription,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -34,30 +24,30 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import type { SnapshotRow } from "@/lib/sui-snapshot"
+} from "@/components/ui/table";
+import type { SnapshotRow } from "@/lib/sui-snapshot";
 
-export const HOLDERS_TABLE_PAGE_SIZE = 25
+export const HOLDERS_TABLE_PAGE_SIZE = 25;
 
 const bigintSorting: SortingFn<SnapshotRow> = (left, right, columnId) => {
-  const leftValue = BigInt(String(left.getValue(columnId) ?? "0"))
-  const rightValue = BigInt(String(right.getValue(columnId) ?? "0"))
+  const leftValue = BigInt(String(left.getValue(columnId) ?? "0"));
+  const rightValue = BigInt(String(right.getValue(columnId) ?? "0"));
 
   if (leftValue === rightValue) {
-    return 0
+    return 0;
   }
 
-  return leftValue > rightValue ? 1 : -1
-}
+  return leftValue > rightValue ? 1 : -1;
+};
 
 function SortButton({
   label,
   sorted,
   onClick,
 }: {
-  label: string
-  sorted: false | "asc" | "desc"
-  onClick: () => void
+  label: string;
+  sorted: false | "asc" | "desc";
+  onClick: () => void;
 }) {
   return (
     <Button type="button" variant="ghost" size="sm" onClick={onClick}>
@@ -70,7 +60,7 @@ function SortButton({
         <ArrowUpDown data-icon="inline-end" />
       )}
     </Button>
-  )
+  );
 }
 
 export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
@@ -78,9 +68,7 @@ export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
     {
       accessorKey: "rank",
       header: "Rank",
-      cell: ({ row }) => (
-        <span className="font-medium tabular-nums">{row.original.rank}</span>
-      ),
+      cell: ({ row }) => <span className="font-medium tabular-nums">{row.original.rank}</span>,
       enableSorting: false,
       size: 64,
     },
@@ -95,8 +83,8 @@ export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
       ),
       cell: ({ row }) => <code className="font-mono">{row.original.address}</code>,
       filterFn: (row, columnId, value) => {
-        const haystack = String(row.getValue(columnId)).toLowerCase()
-        return haystack.includes(String(value).toLowerCase())
+        const haystack = String(row.getValue(columnId)).toLowerCase();
+        return haystack.includes(String(value).toLowerCase());
       },
     },
     {
@@ -111,13 +99,11 @@ export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="text-right font-medium tabular-nums">
-          {row.original.balance}
-        </div>
+        <div className="text-right font-medium tabular-nums">{row.original.balance}</div>
       ),
       sortingFn: bigintSorting,
     },
-  ]
+  ];
 
   if (showAirdrop) {
     columns.push({
@@ -137,43 +123,35 @@ export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
         </div>
       ),
       sortingFn: bigintSorting,
-    })
+    });
   }
 
-  return columns
+  return columns;
 }
 
-export function HoldersTable({
-  rows,
-  showAirdrop,
-}: {
-  rows: SnapshotRow[]
-  showAirdrop: boolean
-}) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "rawBalance", desc: true },
-  ])
+export function HoldersTable({ rows, showAirdrop }: { rows: SnapshotRow[]; showAirdrop: boolean }) {
+  const [sorting, setSorting] = useState<SortingState>([{ id: "rawBalance", desc: true }]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: HOLDERS_TABLE_PAGE_SIZE,
-  })
-  const [addressFilterInput, setAddressFilterInput] = useState("")
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  });
+  const [addressFilterInput, setAddressFilterInput] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  const deferredAddressFilter = useDeferredValue(addressFilterInput)
+  const deferredAddressFilter = useDeferredValue(addressFilterInput);
 
   useEffect(() => {
     setColumnFilters(
       deferredAddressFilter
         ? [{ id: "address", value: deferredAddressFilter.trim().toLowerCase() }]
         : [],
-    )
-    setPagination((current) => ({ ...current, pageIndex: 0 }))
-  }, [deferredAddressFilter])
+    );
+    setPagination((current) => ({ ...current, pageIndex: 0 }));
+  }, [deferredAddressFilter]);
 
   useEffect(() => {
-    setPagination((current) => ({ ...current, pageIndex: 0 }))
-  }, [rows])
+    setPagination((current) => ({ ...current, pageIndex: 0 }));
+  }, [rows]);
 
   const table = useReactTable({
     data: rows,
@@ -190,9 +168,9 @@ export function HoldersTable({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId: (row) => row.address,
-  })
+  });
 
-  const filteredRows = table.getFilteredRowModel().rows.length
+  const filteredRows = table.getFilteredRowModel().rows.length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -229,18 +207,14 @@ export function HoldersTable({
                 <TableHead
                   key={header.id}
                   className={
-                    header.column.id === "rawBalance" ||
-                    header.column.id === "rawAirdropAmount"
+                    header.column.id === "rawBalance" || header.column.id === "rawAirdropAmount"
                       ? "text-right"
                       : undefined
                   }
                 >
                   {header.isPlaceholder
                     ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                    : flexRender(header.column.columnDef.header, header.getContext())}
                 </TableHead>
               ))}
             </TableRow>
@@ -277,9 +251,7 @@ export function HoldersTable({
             {table.getState().pagination.pageIndex + 1}
           </span>{" "}
           of{" "}
-          <span className="font-medium text-foreground">
-            {Math.max(table.getPageCount(), 1)}
-          </span>
+          <span className="font-medium text-foreground">{Math.max(table.getPageCount(), 1)}</span>
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -305,5 +277,5 @@ export function HoldersTable({
         </div>
       </div>
     </div>
-  )
+  );
 }

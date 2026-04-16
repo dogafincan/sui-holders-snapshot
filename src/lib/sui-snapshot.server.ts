@@ -5,11 +5,11 @@ import {
   parseUnits,
   type SnapshotInput,
   type SnapshotResult,
-} from "@/lib/sui-snapshot"
+} from "@/lib/sui-snapshot";
 
-const DEFAULT_ENDPOINT = "https://graphql.mainnet.sui.io/graphql"
-const REQUEST_TIMEOUT_MS = 25_000
-const PAGE_SIZE = 50
+const DEFAULT_ENDPOINT = "https://graphql.mainnet.sui.io/graphql";
+const REQUEST_TIMEOUT_MS = 25_000;
+const PAGE_SIZE = 50;
 
 const OBJECTS_QUERY = `
 query Snapshot($type: String!, $first: Int!, $after: String) {
@@ -40,7 +40,7 @@ query Snapshot($type: String!, $first: Int!, $after: String) {
     }
   }
 }
-`
+`;
 
 const COIN_METADATA_QUERY = `
 query CoinMetadata($coinType: String!) {
@@ -48,58 +48,58 @@ query CoinMetadata($coinType: String!) {
     decimals
   }
 }
-`
+`;
 
 interface GraphQLError {
-  message?: string
+  message?: string;
 }
 
 interface CoinMetadataResponse {
   coinMetadata?: {
-    decimals?: number | null
-  } | null
+    decimals?: number | null;
+  } | null;
 }
 
 interface ObjectsResponse {
   objects?: {
     pageInfo?: {
-      hasNextPage?: boolean | null
-      endCursor?: string | null
-    } | null
+      hasNextPage?: boolean | null;
+      endCursor?: string | null;
+    } | null;
     nodes?: Array<{
       owner?: {
         address?: {
-          address?: string | null
-        } | null
-      } | null
+          address?: string | null;
+        } | null;
+      } | null;
       asMoveObject?: {
         contents?: {
           json?: {
-            balance?: string | number | null
-          } | null
-        } | null
-      } | null
-    }>
-  } | null
+            balance?: string | number | null;
+          } | null;
+        } | null;
+      } | null;
+    }>;
+  } | null;
 }
 
 interface GraphQLPayload<TData> {
-  data?: TData
-  errors?: GraphQLError[]
+  data?: TData;
+  errors?: GraphQLError[];
 }
 
 async function resolveEndpoint() {
   try {
     const cloudflare = (await import("cloudflare:workers")) as {
       env?: {
-        SUI_GRAPHQL_ENDPOINT?: string
-      }
-    }
+        SUI_GRAPHQL_ENDPOINT?: string;
+      };
+    };
 
-    const configured = cloudflare.env?.SUI_GRAPHQL_ENDPOINT?.trim()
-    return configured || DEFAULT_ENDPOINT
+    const configured = cloudflare.env?.SUI_GRAPHQL_ENDPOINT?.trim();
+    return configured || DEFAULT_ENDPOINT;
   } catch {
-    return DEFAULT_ENDPOINT
+    return DEFAULT_ENDPOINT;
   }
 }
 
@@ -116,41 +116,39 @@ async function postGraphQL<TData>(
     },
     body: JSON.stringify({ query, variables }),
     signal,
-  })
+  });
 
   if (!response.ok) {
-    throw new Error(`Sui GraphQL request failed with HTTP ${response.status}.`)
+    throw new Error(`Sui GraphQL request failed with HTTP ${response.status}.`);
   }
 
-  const payload = (await response.json()) as GraphQLPayload<TData>
+  const payload = (await response.json()) as GraphQLPayload<TData>;
   if (payload.errors?.length) {
     const message =
       payload.errors.find((error) => error.message)?.message ??
-      "Sui GraphQL returned an unknown error."
-    throw new Error(message)
+      "Sui GraphQL returned an unknown error.";
+    throw new Error(message);
   }
 
   if (!payload.data) {
-    throw new Error("Missing data in GraphQL response.")
+    throw new Error("Missing data in GraphQL response.");
   }
 
-  return payload.data
+  return payload.data;
 }
 
 function compareBigInt(a: bigint, b: bigint) {
   if (a === b) {
-    return 0
+    return 0;
   }
 
-  return a > b ? 1 : -1
+  return a > b ? 1 : -1;
 }
 
-export async function fetchSuiHolderSnapshot(
-  input: SnapshotInput,
-): Promise<SnapshotResult> {
-  const endpoint = await resolveEndpoint()
-  const controller = new AbortController()
-  const timeout = globalThis.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+export async function fetchSuiHolderSnapshot(input: SnapshotInput): Promise<SnapshotResult> {
+  const endpoint = await resolveEndpoint();
+  const controller = new AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
     const metadata = await postGraphQL<CoinMetadataResponse>(
@@ -160,16 +158,16 @@ export async function fetchSuiHolderSnapshot(
         coinType: input.coinAddress,
       },
       controller.signal,
-    )
+    );
 
     const decimals =
       typeof metadata.coinMetadata?.decimals === "number" &&
       Number.isInteger(metadata.coinMetadata.decimals)
         ? metadata.coinMetadata.decimals
-        : 0
+        : 0;
 
-    const balances = new Map<string, bigint>()
-    let cursor: string | null = null
+    const balances = new Map<string, bigint>();
+    let cursor: string | null = null;
 
     while (true) {
       const snapshotPage: ObjectsResponse = await postGraphQL<ObjectsResponse>(
@@ -181,69 +179,62 @@ export async function fetchSuiHolderSnapshot(
           after: cursor,
         },
         controller.signal,
-      )
+      );
 
-      const connection: ObjectsResponse["objects"] = snapshotPage.objects
+      const connection: ObjectsResponse["objects"] = snapshotPage.objects;
       if (!connection) {
-        throw new Error("Missing data.objects in GraphQL response.")
+        throw new Error("Missing data.objects in GraphQL response.");
       }
 
       for (const node of connection.nodes ?? []) {
-        const ownerAddress = node.owner?.address?.address
+        const ownerAddress = node.owner?.address?.address;
         if (!ownerAddress) {
-          throw new Error("Encountered a coin object without an address owner.")
+          throw new Error("Encountered a coin object without an address owner.");
         }
 
-        const rawBalanceValue = node.asMoveObject?.contents?.json?.balance
+        const rawBalanceValue = node.asMoveObject?.contents?.json?.balance;
         if (rawBalanceValue === undefined || rawBalanceValue === null) {
-          throw new Error("Encountered a coin object without a balance.")
+          throw new Error("Encountered a coin object without a balance.");
         }
 
-        const address = normalizeSuiAddress(ownerAddress)
-        const rawBalance = BigInt(String(rawBalanceValue))
-        balances.set(address, (balances.get(address) ?? 0n) + rawBalance)
+        const address = normalizeSuiAddress(ownerAddress);
+        const rawBalance = BigInt(String(rawBalanceValue));
+        balances.set(address, (balances.get(address) ?? 0n) + rawBalance);
       }
 
       if (!connection.pageInfo?.hasNextPage) {
-        break
+        break;
       }
 
-      cursor = connection.pageInfo.endCursor ?? null
+      cursor = connection.pageInfo.endCursor ?? null;
       if (!cursor) {
-        throw new Error("Missing pageInfo.endCursor while more results remain.")
+        throw new Error("Missing pageInfo.endCursor while more results remain.");
       }
     }
 
     const rows = Array.from(balances.entries())
       .map(([address, rawBalance]) => ({ address, rawBalance }))
       .sort((left, right) => {
-        const balanceComparison = compareBigInt(left.rawBalance, right.rawBalance)
+        const balanceComparison = compareBigInt(left.rawBalance, right.rawBalance);
         if (balanceComparison !== 0) {
-          return balanceComparison * -1
+          return balanceComparison * -1;
         }
 
-        return left.address.localeCompare(right.address)
-      })
+        return left.address.localeCompare(right.address);
+      });
 
-    const totalRawBalance = rows.reduce(
-      (total, row) => total + row.rawBalance,
-      0n,
-    )
+    const totalRawBalance = rows.reduce((total, row) => total + row.rawBalance, 0n);
 
-    let totalAirdropRaw: bigint | undefined
-    let eligibleHolderCount = rows.length
-    let airdropRawByAddress: Map<string, bigint> | undefined
+    let totalAirdropRaw: bigint | undefined;
+    let eligibleHolderCount = rows.length;
+    let airdropRawByAddress: Map<string, bigint> | undefined;
 
     if (input.airdropAmount) {
-      totalAirdropRaw = parseUnits(input.airdropAmount, decimals)
-      const excludedAddresses = new Set(input.excludedAddresses)
-      const allocation = allocateAirdropShares(
-        rows,
-        totalAirdropRaw,
-        excludedAddresses,
-      )
-      eligibleHolderCount = allocation.eligibleHolderCount
-      airdropRawByAddress = allocation.allocations
+      totalAirdropRaw = parseUnits(input.airdropAmount, decimals);
+      const excludedAddresses = new Set(input.excludedAddresses);
+      const allocation = allocateAirdropShares(rows, totalAirdropRaw, excludedAddresses);
+      eligibleHolderCount = allocation.eligibleHolderCount;
+      airdropRawByAddress = allocation.allocations;
     }
 
     return {
@@ -257,15 +248,13 @@ export async function fetchSuiHolderSnapshot(
         airdropEnabled: totalAirdropRaw !== undefined,
         totalBalance: formatUnits(totalRawBalance, decimals),
         totalAirdropAmount:
-          totalAirdropRaw !== undefined
-            ? formatUnits(totalAirdropRaw, decimals)
-            : undefined,
+          totalAirdropRaw !== undefined ? formatUnits(totalAirdropRaw, decimals) : undefined,
       },
       rows: rows.map((row, index) => {
         const rawAirdropAmount =
           totalAirdropRaw !== undefined
             ? (airdropRawByAddress?.get(row.address) ?? 0n).toString()
-            : undefined
+            : undefined;
 
         return {
           rank: index + 1,
@@ -277,18 +266,16 @@ export async function fetchSuiHolderSnapshot(
               ? formatUnits(BigInt(rawAirdropAmount), decimals)
               : undefined,
           rawAirdropAmount,
-        }
+        };
       }),
-    }
+    };
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(
-        `Snapshot request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds.`,
-      )
+      throw new Error(`Snapshot request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds.`);
     }
 
-    throw error
+    throw error;
   } finally {
-    clearTimeout(timeout)
+    clearTimeout(timeout);
   }
 }

@@ -1,58 +1,38 @@
-import {
-  startTransition,
-  type FormEvent,
-  type ReactNode,
-  useState,
-} from "react"
-import { Download, LoaderCircle, Sparkles } from "lucide-react"
-import { toast } from "sonner"
+import { startTransition, type FormEvent, type ReactNode, useState } from "react";
+import { Download, LoaderCircle, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
-import { HoldersTable } from "@/components/holders-table"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  toErrorMessage,
-  type SnapshotInput,
-  type SnapshotResult,
-} from "@/lib/sui-snapshot"
+import { HoldersTable } from "@/components/holders-table";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { toErrorMessage, type SnapshotInput, type SnapshotResult } from "@/lib/sui-snapshot";
 import {
   buildSnapshotDownload,
   buildSnapshotInputFromForm,
-} from "@/components/snapshot-workbench.helpers"
+} from "@/components/snapshot-workbench.helpers";
 
-type RunSnapshot = (payload: { data: SnapshotInput }) => Promise<SnapshotResult>
+type RunSnapshot = (payload: { data: SnapshotInput }) => Promise<SnapshotResult>;
 
 function formatInteger(value: number) {
-  return new Intl.NumberFormat("en-US").format(value)
+  return new Intl.NumberFormat("en-US").format(value);
 }
 
 function downloadSnapshot(snapshot: SnapshotResult) {
-  const download = buildSnapshotDownload(snapshot)
-  const blob = new Blob([download.csv], { type: "text/csv" })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement("a")
+  const download = buildSnapshotDownload(snapshot);
+  const blob = new Blob([download.csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
 
-  anchor.href = url
-  anchor.download = download.filename
-  anchor.click()
-  URL.revokeObjectURL(url)
+  anchor.href = url;
+  anchor.download = download.filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function SummaryCard({
@@ -60,9 +40,9 @@ function SummaryCard({
   value,
   description,
 }: {
-  label: string
-  value: ReactNode
-  description: string
+  label: string;
+  value: ReactNode;
+  description: string;
 }) {
   return (
     <Card size="sm">
@@ -76,7 +56,7 @@ function SummaryCard({
         <p className="text-sm text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function ResultsSkeleton() {
@@ -102,7 +82,7 @@ function ResultsSkeleton() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 function EmptyState() {
@@ -141,75 +121,70 @@ function EmptyState() {
         </Card>
       </CardContent>
     </Card>
-  )
+  );
 }
 
-export function SnapshotWorkbench({
-  runSnapshot,
-}: {
-  runSnapshot: RunSnapshot
-}) {
-  const [coinAddress, setCoinAddress] = useState("0x2::sui::SUI")
-  const [airdropAmount, setAirdropAmount] = useState("")
-  const [excludedAddressText, setExcludedAddressText] = useState("")
-  const [snapshot, setSnapshot] = useState<SnapshotResult | null>(null)
-  const [formError, setFormError] = useState<string | null>(null)
-  const [requestError, setRequestError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot }) {
+  const [coinAddress, setCoinAddress] = useState("0x2::sui::SUI");
+  const [airdropAmount, setAirdropAmount] = useState("");
+  const [excludedAddressText, setExcludedAddressText] = useState("");
+  const [snapshot, setSnapshot] = useState<SnapshotResult | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setFormError(null)
-    setRequestError(null)
+    event.preventDefault();
+    setFormError(null);
+    setRequestError(null);
 
-    let payload: SnapshotInput
+    let payload: SnapshotInput;
     try {
       payload = buildSnapshotInputFromForm({
         coinAddress,
         airdropAmount,
         excludedAddressText,
-      })
+      });
     } catch (error) {
-      setFormError(toErrorMessage(error))
-      return
+      setFormError(toErrorMessage(error));
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      const nextSnapshot = await runSnapshot({ data: payload })
+      const nextSnapshot = await runSnapshot({ data: payload });
       startTransition(() => {
-        setSnapshot(nextSnapshot)
-      })
-      toast.success(`Loaded ${formatInteger(nextSnapshot.meta.holderCount)} holders.`)
+        setSnapshot(nextSnapshot);
+      });
+      toast.success(`Loaded ${formatInteger(nextSnapshot.meta.holderCount)} holders.`);
     } catch (error) {
-      const message = toErrorMessage(error)
+      const message = toErrorMessage(error);
       startTransition(() => {
-        setRequestError(message)
-      })
-      toast.error(message)
+        setRequestError(message);
+      });
+      toast.error(message);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
   function handleDownload() {
     if (!snapshot) {
-      return
+      return;
     }
 
-    downloadSnapshot(snapshot)
-    toast.success("CSV download started.")
+    downloadSnapshot(snapshot);
+    toast.success("CSV download started.");
   }
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Sui holders snapshot
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Sui holders snapshot</h1>
         <p className="max-w-3xl text-muted-foreground">
-          Run a live holder snapshot, model a proportional airdrop, and export the same ranked rows to CSV.
+          Run a live holder snapshot, model a proportional airdrop, and export the same ranked rows
+          to CSV.
         </p>
       </header>
 
@@ -218,7 +193,8 @@ export function SnapshotWorkbench({
           <CardHeader>
             <CardTitle>Snapshot parameters</CardTitle>
             <CardDescription>
-              Exclusions accept commas, spaces, or line breaks. Inputs are normalized before the request is sent.
+              Exclusions accept commas, spaces, or line breaks. Inputs are normalized before the
+              request is sent.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -253,12 +229,8 @@ export function SnapshotWorkbench({
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="excluded-addresses">
-                    Excluded addresses
-                  </FieldLabel>
-                  <FieldDescription>
-                    Only used when airdrop mode is enabled.
-                  </FieldDescription>
+                  <FieldLabel htmlFor="excluded-addresses">Excluded addresses</FieldLabel>
+                  <FieldDescription>Only used when airdrop mode is enabled.</FieldDescription>
                   <Textarea
                     id="excluded-addresses"
                     value={excludedAddressText}
@@ -325,7 +297,7 @@ export function SnapshotWorkbench({
                   label="Airdrop mode"
                   value={
                     snapshot.meta.airdropEnabled
-                      ? snapshot.meta.totalAirdropAmount ?? "Enabled"
+                      ? (snapshot.meta.totalAirdropAmount ?? "Enabled")
                       : "Off"
                   }
                   description={
@@ -341,21 +313,13 @@ export function SnapshotWorkbench({
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex flex-col gap-2">
                       <div className="flex flex-wrap gap-2">
-                        <Badge
-                          variant={
-                            snapshot.meta.airdropEnabled ? "default" : "secondary"
-                          }
-                        >
-                          {snapshot.meta.airdropEnabled
-                            ? "Airdrop allocation"
-                            : "Holder snapshot"}
+                        <Badge variant={snapshot.meta.airdropEnabled ? "default" : "secondary"}>
+                          {snapshot.meta.airdropEnabled ? "Airdrop allocation" : "Holder snapshot"}
                         </Badge>
                       </div>
                       <CardTitle>Snapshot results</CardTitle>
                       <CardDescription>
-                        <span className="font-medium text-foreground">
-                          Coin type:
-                        </span>{" "}
+                        <span className="font-medium text-foreground">Coin type:</span>{" "}
                         <code className="font-mono">{snapshot.meta.coinAddress}</code>
                       </CardDescription>
                     </div>
@@ -367,10 +331,7 @@ export function SnapshotWorkbench({
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <HoldersTable
-                    rows={snapshot.rows}
-                    showAirdrop={snapshot.meta.airdropEnabled}
-                  />
+                  <HoldersTable rows={snapshot.rows} showAirdrop={snapshot.meta.airdropEnabled} />
                 </CardContent>
               </Card>
             </>
@@ -382,5 +343,5 @@ export function SnapshotWorkbench({
         </div>
       </section>
     </main>
-  )
+  );
 }
