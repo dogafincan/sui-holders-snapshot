@@ -25,7 +25,7 @@ describe("fetchSuiHolderSnapshot", () => {
     vi.unstubAllGlobals();
   });
 
-  it("aggregates paginated balances and computes proportional airdrops", async () => {
+  it("aggregates paginated balances into ranked holder rows", async () => {
     fetchMock
       .mockResolvedValueOnce(
         jsonResponse({
@@ -85,32 +85,35 @@ describe("fetchSuiHolderSnapshot", () => {
 
     const snapshot = await fetchSuiHolderSnapshot({
       coinAddress: normalizeCoinType("0x2::sui::SUI"),
-      airdropAmount: "1",
-      excludedAddresses: [],
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(snapshot.meta.holderCount).toBe(3);
-    expect(snapshot.meta.totalBalance).toBe("5");
+    expect(snapshot.meta).toEqual({
+      endpoint: "https://graphql.mainnet.sui.io/graphql",
+      coinAddress: normalizeCoinType("0x2::sui::SUI"),
+      decimals: 2,
+      holderCount: 3,
+      totalBalance: "5",
+    });
     expect(snapshot.rows).toEqual([
-      expect.objectContaining({
+      {
         rank: 1,
         address: ADDRESS_A,
         balance: "3.25",
-        airdropAmount: "0.65",
-      }),
-      expect.objectContaining({
+        rawBalance: "325",
+      },
+      {
         rank: 2,
         address: ADDRESS_B,
         balance: "1.25",
-        airdropAmount: "0.25",
-      }),
-      expect.objectContaining({
+        rawBalance: "125",
+      },
+      {
         rank: 3,
         address: ADDRESS_C,
         balance: "0.5",
-        airdropAmount: "0.1",
-      }),
+        rawBalance: "50",
+      },
     ]);
   });
 
@@ -132,8 +135,6 @@ describe("fetchSuiHolderSnapshot", () => {
     await expect(
       fetchSuiHolderSnapshot({
         coinAddress: normalizeCoinType("0x2::sui::SUI"),
-        airdropAmount: undefined,
-        excludedAddresses: [],
       }),
     ).rejects.toThrow("Missing data.objects in GraphQL response.");
   });
@@ -145,8 +146,6 @@ describe("fetchSuiHolderSnapshot", () => {
     await expect(
       fetchSuiHolderSnapshot({
         coinAddress: normalizeCoinType("0x2::sui::SUI"),
-        airdropAmount: undefined,
-        excludedAddresses: [],
       }),
     ).rejects.toThrow("Sui GraphQL request failed with HTTP 503.");
   });

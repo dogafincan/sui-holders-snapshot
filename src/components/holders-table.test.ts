@@ -25,8 +25,6 @@ function makeRows(count: number): SnapshotRow[] {
       address: makeAddress(descending),
       balance: `${descending}.00`,
       rawBalance: `${descending * 100}`,
-      airdropAmount: `${descending / 10}`,
-      rawAirdropAmount: `${descending * 10}`,
     };
   });
 }
@@ -39,7 +37,7 @@ function buildTable(
 ) {
   return createTable({
     data: rows,
-    columns: createColumns(true),
+    columns: createColumns(),
     state: {
       sorting,
       columnFilters,

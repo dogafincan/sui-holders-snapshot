@@ -6,7 +6,6 @@ The app:
 
 - pages Sui GraphQL for every live `Coin<T>` object of a target token,
 - aggregates balances by owner address,
-- optionally computes proportional airdrop allocations with exclusions,
 - renders the full result set in a TanStack Table UI,
 - exports the same rows as CSV without rerunning the snapshot.
 
@@ -28,14 +27,11 @@ Primary workflow:
 Input:
 
 - Sui coin type in `0xPACKAGE::MODULE::TOKEN` format
-- optional airdrop amount
-- optional excluded addresses
 
 Output:
 
 - ranked holder table
-- optional `airdrop_amount` column
-- client-side CSV download
+- client-side CSV download with exactly `rank,address,balance`
 
 ## Stack
 
@@ -58,7 +54,7 @@ Output:
 - `src/components/ui/field.tsx`: shadcn field composition used for form layout
 - `src/lib/sui-snapshot.server.ts`: Sui GraphQL execution and aggregation
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
-- `src/lib/sui-snapshot.ts`: shared validation, formatting, CSV, and allocation helpers
+- `src/lib/sui-snapshot.ts`: shared validation, formatting, and CSV helpers
 - `wrangler.jsonc`: Cloudflare Worker configuration
 
 Generated files:
@@ -155,6 +151,8 @@ vp run cf-typegen
 ## Notes
 
 - The app is stateless and public by design. No D1, KV, R2, or background jobs.
+- The exported CSV contract is intentionally fixed to `rank,address,balance` so
+  it can be uploaded directly into the sibling `sui-airdrop` app.
 - Vite+ is the primary toolchain. `vite.config.ts` is the source of truth for
   format, lint, test, and build configuration.
 - Generated files such as `src/routeTree.gen.ts` and `worker-configuration.d.ts`

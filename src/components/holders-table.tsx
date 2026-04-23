@@ -63,8 +63,8 @@ function SortButton({
   );
 }
 
-export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
-  const columns: ColumnDef<SnapshotRow>[] = [
+export function createColumns(): ColumnDef<SnapshotRow>[] {
+  return [
     {
       accessorKey: "rank",
       header: "Rank",
@@ -104,32 +104,9 @@ export function createColumns(showAirdrop: boolean): ColumnDef<SnapshotRow>[] {
       sortingFn: bigintSorting,
     },
   ];
-
-  if (showAirdrop) {
-    columns.push({
-      accessorKey: "rawAirdropAmount",
-      header: ({ column }) => (
-        <div className="flex justify-end">
-          <SortButton
-            label="Airdrop"
-            sorted={column.getIsSorted()}
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-right font-medium tabular-nums">
-          {row.original.airdropAmount ?? "0"}
-        </div>
-      ),
-      sortingFn: bigintSorting,
-    });
-  }
-
-  return columns;
 }
 
-export function HoldersTable({ rows, showAirdrop }: { rows: SnapshotRow[]; showAirdrop: boolean }) {
+export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
   const [sorting, setSorting] = useState<SortingState>([{ id: "rawBalance", desc: true }]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -155,7 +132,7 @@ export function HoldersTable({ rows, showAirdrop }: { rows: SnapshotRow[]; showA
 
   const table = useReactTable({
     data: rows,
-    columns: createColumns(showAirdrop),
+    columns: createColumns(),
     state: {
       sorting,
       pagination,
@@ -206,11 +183,7 @@ export function HoldersTable({ rows, showAirdrop }: { rows: SnapshotRow[]; showA
               {headerGroup.headers.map((header) => (
                 <TableHead
                   key={header.id}
-                  className={
-                    header.column.id === "rawBalance" || header.column.id === "rawAirdropAmount"
-                      ? "text-right"
-                      : undefined
-                  }
+                  className={header.column.id === "rawBalance" ? "text-right" : undefined}
                 >
                   {header.isPlaceholder
                     ? null
@@ -233,10 +206,7 @@ export function HoldersTable({ rows, showAirdrop }: { rows: SnapshotRow[]; showA
             ))
           ) : (
             <TableRow>
-              <TableCell
-                colSpan={showAirdrop ? 4 : 3}
-                className="py-10 text-center text-muted-foreground"
-              >
+              <TableCell colSpan={3} className="py-10 text-center text-muted-foreground">
                 No holders match the current address filter.
               </TableCell>
             </TableRow>

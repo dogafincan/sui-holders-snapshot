@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 
 import { SnapshotWorkbench } from "@/components/snapshot-workbench";
 import { runSnapshot } from "@/lib/sui-snapshot.functions";
@@ -12,8 +11,7 @@ export const Route = createFileRoute("/")({
       },
       {
         name: "description",
-        content:
-          "Run Sui token holder snapshots, model proportional airdrops, and export ranked CSV results on demand.",
+        content: "Run Sui token holder snapshots and export ranked holder CSV results on demand.",
       },
     ],
   }),
@@ -21,7 +19,5 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexRoute() {
-  const runSnapshotFn = useServerFn(runSnapshot);
-
-  return <SnapshotWorkbench runSnapshot={runSnapshotFn} />;
+  return <SnapshotWorkbench runSnapshot={runSnapshot} />;
 }

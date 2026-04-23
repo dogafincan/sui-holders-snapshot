@@ -10,7 +10,6 @@ Core behavior:
 
 - Query Sui GraphQL for all live `Coin<T>` objects for a token type.
 - Aggregate balances by owner address.
-- Optionally compute proportional airdrop allocations with exclusions.
 - Render the result in a TanStack Table UI.
 - Export the returned rows as CSV client-side.
 
@@ -37,7 +36,7 @@ Core behavior:
 - `src/components/ui/field.tsx`: shadcn field composition for form structure
 - `src/lib/sui-snapshot.server.ts`: server-side snapshot execution
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
-- `src/lib/sui-snapshot.ts`: shared validation, formatting, CSV, and allocation helpers
+- `src/lib/sui-snapshot.ts`: shared validation, formatting, and CSV helpers
 - `wrangler.jsonc`: Cloudflare Worker config
 
 ## Generated Files
@@ -95,8 +94,11 @@ aligned with `wrangler.jsonc`.
   unless explicitly requested.
 - Preserve the current public interface:
   - route `/`
-  - input: `coinAddress`, optional `airdropAmount`, optional exclusions
-  - output: ranked rows plus optional airdrop column
+  - input: `coinAddress`
+  - output: ranked rows with `rank`, `address`, and `balance`
+- Preserve the canonical CSV contract: `rank,address,balance`. Do not add
+  airdrop amount columns here; airdrop amounts are chosen exclusively in
+  `sui-airdrop`.
 - Keep transport values server-to-client JSON-safe. Do not send `BigInt`
   objects across the boundary.
 - Prefer putting reusable pure logic in `src/lib/sui-snapshot.ts` so it stays

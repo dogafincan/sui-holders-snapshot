@@ -1,8 +1,6 @@
 import {
-  allocateAirdropShares,
   formatUnits,
   normalizeSuiAddress,
-  parseUnits,
   type SnapshotInput,
   type SnapshotResult,
 } from "@/lib/sui-snapshot";
@@ -225,49 +223,20 @@ export async function fetchSuiHolderSnapshot(input: SnapshotInput): Promise<Snap
 
     const totalRawBalance = rows.reduce((total, row) => total + row.rawBalance, 0n);
 
-    let totalAirdropRaw: bigint | undefined;
-    let eligibleHolderCount = rows.length;
-    let airdropRawByAddress: Map<string, bigint> | undefined;
-
-    if (input.airdropAmount) {
-      totalAirdropRaw = parseUnits(input.airdropAmount, decimals);
-      const excludedAddresses = new Set(input.excludedAddresses);
-      const allocation = allocateAirdropShares(rows, totalAirdropRaw, excludedAddresses);
-      eligibleHolderCount = allocation.eligibleHolderCount;
-      airdropRawByAddress = allocation.allocations;
-    }
-
     return {
       meta: {
         endpoint,
         coinAddress: input.coinAddress,
         decimals,
         holderCount: rows.length,
-        exclusionCount: input.excludedAddresses.length,
-        eligibleHolderCount,
-        airdropEnabled: totalAirdropRaw !== undefined,
         totalBalance: formatUnits(totalRawBalance, decimals),
-        totalAirdropAmount:
-          totalAirdropRaw !== undefined ? formatUnits(totalAirdropRaw, decimals) : undefined,
       },
-      rows: rows.map((row, index) => {
-        const rawAirdropAmount =
-          totalAirdropRaw !== undefined
-            ? (airdropRawByAddress?.get(row.address) ?? 0n).toString()
-            : undefined;
-
-        return {
-          rank: index + 1,
-          address: row.address,
-          balance: formatUnits(row.rawBalance, decimals),
-          rawBalance: row.rawBalance.toString(),
-          airdropAmount:
-            rawAirdropAmount !== undefined
-              ? formatUnits(BigInt(rawAirdropAmount), decimals)
-              : undefined,
-          rawAirdropAmount,
-        };
-      }),
+      rows: rows.map((row, index) => ({
+        rank: index + 1,
+        address: row.address,
+        balance: formatUnits(row.rawBalance, decimals),
+        rawBalance: row.rawBalance.toString(),
+      })),
     };
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {

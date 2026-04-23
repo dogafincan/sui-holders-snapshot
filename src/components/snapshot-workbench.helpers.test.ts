@@ -13,13 +13,9 @@ describe("snapshot workbench helpers", () => {
     expect(
       buildSnapshotInputFromForm({
         coinAddress: "0x2::sui::SUI",
-        airdropAmount: "1000.5",
-        excludedAddressText: "0x1\n0x2, 0x2",
       }),
     ).toEqual({
       coinAddress: `0x${"2".padStart(64, "0")}::sui::SUI`,
-      airdropAmount: "1000.5",
-      excludedAddresses: [`0x${"1".padStart(64, "0")}`, `0x${"2".padStart(64, "0")}`],
     });
   });
 
@@ -30,9 +26,6 @@ describe("snapshot workbench helpers", () => {
         coinAddress: `0x${"2".padStart(64, "0")}::sui::SUI`,
         decimals: 2,
         holderCount: 1,
-        exclusionCount: 0,
-        eligibleHolderCount: 1,
-        airdropEnabled: false,
         totalBalance: "5",
       },
       rows: [

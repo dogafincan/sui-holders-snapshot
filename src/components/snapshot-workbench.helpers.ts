@@ -1,6 +1,5 @@
 import {
   buildSnapshotCsv,
-  parseExcludedAddressList,
   snapshotInputSchema,
   type SnapshotInput,
   type SnapshotResult,
@@ -8,15 +7,11 @@ import {
 
 export interface SnapshotFormValues {
   coinAddress: string;
-  airdropAmount: string;
-  excludedAddressText: string;
 }
 
 export function buildSnapshotInputFromForm(formValues: SnapshotFormValues): SnapshotInput {
   return snapshotInputSchema.parse({
     coinAddress: formValues.coinAddress,
-    airdropAmount: formValues.airdropAmount,
-    excludedAddresses: parseExcludedAddressList(formValues.excludedAddressText),
   });
 }
 

@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { toErrorMessage, type SnapshotInput, type SnapshotResult } from "@/lib/sui-snapshot";
 import {
   buildSnapshotDownload,
@@ -66,7 +65,6 @@ function ResultsSkeleton() {
         <Skeleton className="h-32" />
         <Skeleton className="h-32" />
         <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
       </div>
 
       <Card>
@@ -90,9 +88,7 @@ function EmptyState() {
     <Card>
       <CardHeader>
         <CardTitle>Ready to run</CardTitle>
-        <CardDescription>
-          Enter a Sui coin type and optional airdrop settings to generate a ranked holder table.
-        </CardDescription>
+        <CardDescription>Enter a Sui coin type to generate a ranked holder table.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-3">
         <Card size="sm">
@@ -100,14 +96,6 @@ function EmptyState() {
             <CardTitle>Live snapshot</CardTitle>
             <CardDescription>
               Scan the current holder set and aggregate balances by owner address.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-        <Card size="sm">
-          <CardHeader>
-            <CardTitle>Optional airdrop</CardTitle>
-            <CardDescription>
-              Add a proportional airdrop amount and exclude addresses before shares are calculated.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -126,8 +114,6 @@ function EmptyState() {
 
 export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot }) {
   const [coinAddress, setCoinAddress] = useState("0x2::sui::SUI");
-  const [airdropAmount, setAirdropAmount] = useState("");
-  const [excludedAddressText, setExcludedAddressText] = useState("");
   const [snapshot, setSnapshot] = useState<SnapshotResult | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -142,8 +128,6 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
     try {
       payload = buildSnapshotInputFromForm({
         coinAddress,
-        airdropAmount,
-        excludedAddressText,
       });
     } catch (error) {
       setFormError(toErrorMessage(error));
@@ -183,8 +167,7 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-tight">Sui holders snapshot</h1>
         <p className="max-w-3xl text-muted-foreground">
-          Run a live holder snapshot, model a proportional airdrop, and export the same ranked rows
-          to CSV.
+          Run a live holder snapshot and export the ranked holder list to CSV.
         </p>
       </header>
 
@@ -192,10 +175,7 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
         <Card className="h-fit lg:sticky lg:top-6">
           <CardHeader>
             <CardTitle>Snapshot parameters</CardTitle>
-            <CardDescription>
-              Exclusions accept commas, spaces, or line breaks. Inputs are normalized before the
-              request is sent.
-            </CardDescription>
+            <CardDescription>Inputs are normalized before the request is sent.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
@@ -211,32 +191,6 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
                     onChange={(event) => setCoinAddress(event.target.value)}
                     placeholder="0x2::sui::SUI"
                     autoComplete="off"
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="airdrop-amount">Airdrop amount</FieldLabel>
-                  <FieldDescription>
-                    Leave this empty to run a balance-only snapshot.
-                  </FieldDescription>
-                  <Input
-                    id="airdrop-amount"
-                    value={airdropAmount}
-                    onChange={(event) => setAirdropAmount(event.target.value)}
-                    placeholder="1000000"
-                    autoComplete="off"
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="excluded-addresses">Excluded addresses</FieldLabel>
-                  <FieldDescription>Only used when airdrop mode is enabled.</FieldDescription>
-                  <Textarea
-                    id="excluded-addresses"
-                    value={excludedAddressText}
-                    onChange={(event) => setExcludedAddressText(event.target.value)}
-                    placeholder={"0x0000...\n0x1234..."}
-                    className="min-h-32"
                   />
                 </Field>
               </FieldGroup>
@@ -277,7 +231,7 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
         <div className="flex flex-col gap-6">
           {snapshot ? (
             <>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-3">
                 <SummaryCard
                   label="Holders"
                   value={formatInteger(snapshot.meta.holderCount)}
@@ -289,22 +243,9 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
                   description={`Coin decimals: ${snapshot.meta.decimals}`}
                 />
                 <SummaryCard
-                  label="Eligible holders"
-                  value={formatInteger(snapshot.meta.eligibleHolderCount)}
-                  description={`${formatInteger(snapshot.meta.exclusionCount)} excluded address${snapshot.meta.exclusionCount === 1 ? "" : "es"}`}
-                />
-                <SummaryCard
-                  label="Airdrop mode"
-                  value={
-                    snapshot.meta.airdropEnabled
-                      ? (snapshot.meta.totalAirdropAmount ?? "Enabled")
-                      : "Off"
-                  }
-                  description={
-                    snapshot.meta.airdropEnabled
-                      ? "Proportional allocation with remainder assigned to the top eligible holder."
-                      : "Balance-only snapshot with CSV export."
-                  }
+                  label="CSV format"
+                  value="3 columns"
+                  description="Exported as rank, address, and balance."
                 />
               </div>
 
@@ -313,9 +254,7 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex flex-col gap-2">
                       <div className="flex flex-wrap gap-2">
-                        <Badge variant={snapshot.meta.airdropEnabled ? "default" : "secondary"}>
-                          {snapshot.meta.airdropEnabled ? "Airdrop allocation" : "Holder snapshot"}
-                        </Badge>
+                        <Badge variant="secondary">Holder snapshot</Badge>
                       </div>
                       <CardTitle>Snapshot results</CardTitle>
                       <CardDescription>
@@ -331,7 +270,7 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <HoldersTable rows={snapshot.rows} showAirdrop={snapshot.meta.airdropEnabled} />
+                  <HoldersTable rows={snapshot.rows} />
                 </CardContent>
               </Card>
             </>
