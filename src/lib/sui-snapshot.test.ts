@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import {
+  addDecimalAmounts,
   buildSnapshotCsv,
+  buildSnapshotResult,
+  compactCoinType,
+  compareDecimalAmounts,
   formatUnits,
+  normalizeDecimalAmount,
   normalizeCoinType,
   snapshotInputSchema,
   type SnapshotResult,
@@ -15,9 +20,21 @@ describe("sui snapshot helpers", () => {
     expect(normalizeCoinType("0x2::sui::SUI")).toBe(`0x${"2".padStart(64, "0")}::sui::SUI`);
   });
 
+  it("compacts canonical coin types for upstream APIs that do not accept padded packages", () => {
+    expect(compactCoinType(`0x${"2".padStart(64, "0")}::sui::SUI`)).toBe("0x2::sui::SUI");
+  });
+
   it("formats decimal unit strings", () => {
     expect(formatUnits(12_345n, 2)).toBe("123.45");
     expect(formatUnits(5n, 0)).toBe("5");
+  });
+
+  it("normalizes and compares decimal amount strings", () => {
+    expect(normalizeDecimalAmount("1.2300")).toBe("1.23");
+    expect(normalizeDecimalAmount("1.2e-7")).toBe("0.00000012");
+    expect(addDecimalAmounts("1.25", "0.005")).toBe("1.255");
+    expect(compareDecimalAmounts("10", "2.5")).toBe(1);
+    expect(compareDecimalAmounts("0.5", "0.50")).toBe(0);
   });
 
   it("validates the holder snapshot input", () => {
@@ -33,9 +50,8 @@ describe("sui snapshot helpers", () => {
   it("builds the canonical holder csv output", () => {
     const snapshot: SnapshotResult = {
       meta: {
-        endpoint: "https://graphql.mainnet.sui.io/graphql",
+        endpoint: "https://api.blockberry.one/sui/v1/coins",
         coinAddress: normalizeCoinType("0x2::sui::SUI"),
-        decimals: 2,
         holderCount: 1,
         totalBalance: "5",
       },
@@ -50,5 +66,40 @@ describe("sui snapshot helpers", () => {
     };
 
     expect(buildSnapshotCsv(snapshot)).toBe(`rank,address,balance\n1,${ADDRESS_A},5\n`);
+  });
+
+  it("assembles a ranked snapshot from batched decimal balance rows", () => {
+    expect(
+      buildSnapshotResult({
+        endpoint: "https://api.blockberry.one/sui/v1/coins",
+        coinAddress: normalizeCoinType("0x2::sui::SUI"),
+        balances: [
+          { address: ADDRESS_A, balance: "1.5" },
+          { address: ADDRESS_A, balance: "0.25" },
+          { address: `0x${"2".padStart(64, "0")}`, balance: "2" },
+        ],
+      }),
+    ).toEqual({
+      meta: {
+        endpoint: "https://api.blockberry.one/sui/v1/coins",
+        coinAddress: normalizeCoinType("0x2::sui::SUI"),
+        holderCount: 2,
+        totalBalance: "3.75",
+      },
+      rows: [
+        {
+          rank: 1,
+          address: `0x${"2".padStart(64, "0")}`,
+          balance: "2",
+          rawBalance: "2",
+        },
+        {
+          rank: 2,
+          address: ADDRESS_A,
+          balance: "1.75",
+          rawBalance: "1.75",
+        },
+      ],
+    });
   });
 });

@@ -10,16 +10,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toErrorMessage, type SnapshotInput, type SnapshotResult } from "@/lib/sui-snapshot";
+import {
+  buildSnapshotResult,
+  toErrorMessage,
+  type SnapshotBalanceRow,
+  type SnapshotInput,
+  type SnapshotPageBatchInput,
+  type SnapshotPageBatchResult,
+  type SnapshotResult,
+} from "@/lib/sui-snapshot";
 import {
   buildSnapshotDownload,
   buildSnapshotInputFromForm,
 } from "@/components/snapshot-workbench.helpers";
 
-type RunSnapshot = (payload: { data: SnapshotInput }) => Promise<SnapshotResult>;
+type RunSnapshotBatch = (payload: {
+  data: SnapshotPageBatchInput;
+}) => Promise<SnapshotPageBatchResult>;
+
+interface SnapshotProgress {
+  holdersFetched: number;
+  pagesFetched: number;
+}
+
+const BATCH_PAUSE_MS = 1_500;
 
 function formatInteger(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function downloadSnapshot(snapshot: SnapshotResult) {
@@ -95,7 +116,7 @@ function EmptyState() {
           <CardHeader>
             <CardTitle>Live snapshot</CardTitle>
             <CardDescription>
-              Scan the current holder set and aggregate balances by owner address.
+              Fetch the indexed holder set and aggregate balances by owner address.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -112,11 +133,12 @@ function EmptyState() {
   );
 }
 
-export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot }) {
+export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunSnapshotBatch }) {
   const [coinAddress, setCoinAddress] = useState("0x2::sui::SUI");
   const [snapshot, setSnapshot] = useState<SnapshotResult | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [snapshotProgress, setSnapshotProgress] = useState<SnapshotProgress | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -135,9 +157,48 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
     }
 
     setIsSubmitting(true);
+    setSnapshotProgress({ holdersFetched: 0, pagesFetched: 0 });
 
     try {
-      const nextSnapshot = await runSnapshot({ data: payload });
+      const balances: SnapshotBalanceRow[] = [];
+      let nextPage: number | null = 0;
+      let pagesFetched = 0;
+      let holdersFetched = 0;
+      let endpoint: string | null = null;
+
+      while (nextPage !== null) {
+        const batch = await runSnapshotBatch({
+          data: {
+            ...payload,
+            startPage: nextPage,
+          },
+        });
+
+        if (!batch) {
+          throw new Error("Snapshot batch failed before returning data.");
+        }
+
+        endpoint = batch.meta.endpoint;
+        balances.push(...batch.balances);
+        pagesFetched += batch.pagesFetched;
+        holdersFetched += batch.holdersFetched;
+        nextPage = batch.nextPage;
+
+        startTransition(() => {
+          setSnapshotProgress({ holdersFetched, pagesFetched });
+        });
+
+        if (nextPage !== null) {
+          await wait(BATCH_PAUSE_MS);
+        }
+      }
+
+      const nextSnapshot = buildSnapshotResult({
+        endpoint: endpoint ?? "https://api.blockberry.one/sui/v1/coins",
+        coinAddress: payload.coinAddress,
+        balances,
+      });
+
       startTransition(() => {
         setSnapshot(nextSnapshot);
       });
@@ -150,6 +211,7 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
       toast.error(message);
     } finally {
       setIsSubmitting(false);
+      setSnapshotProgress(null);
     }
   }
 
@@ -215,7 +277,9 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
                 {isSubmitting ? (
                   <>
                     <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                    Running snapshot
+                    {snapshotProgress && snapshotProgress.pagesFetched > 0
+                      ? `${formatInteger(snapshotProgress.holdersFetched)} holders fetched`
+                      : "Running snapshot"}
                   </>
                 ) : (
                   <>
@@ -235,12 +299,12 @@ export function SnapshotWorkbench({ runSnapshot }: { runSnapshot: RunSnapshot })
                 <SummaryCard
                   label="Holders"
                   value={formatInteger(snapshot.meta.holderCount)}
-                  description="All balances aggregated by owner address."
+                  description="Indexed balances returned for the coin type."
                 />
                 <SummaryCard
                   label="Total balance"
                   value={snapshot.meta.totalBalance}
-                  description={`Coin decimals: ${snapshot.meta.decimals}`}
+                  description="Sum of the returned holder balances."
                 />
                 <SummaryCard
                   label="CSV format"

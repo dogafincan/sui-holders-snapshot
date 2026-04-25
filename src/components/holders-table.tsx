@@ -25,19 +25,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { SnapshotRow } from "@/lib/sui-snapshot";
+import { compareDecimalAmounts, type SnapshotRow } from "@/lib/sui-snapshot";
 
 export const HOLDERS_TABLE_PAGE_SIZE = 25;
 
-const bigintSorting: SortingFn<SnapshotRow> = (left, right, columnId) => {
-  const leftValue = BigInt(String(left.getValue(columnId) ?? "0"));
-  const rightValue = BigInt(String(right.getValue(columnId) ?? "0"));
-
-  if (leftValue === rightValue) {
-    return 0;
-  }
-
-  return leftValue > rightValue ? 1 : -1;
+const decimalSorting: SortingFn<SnapshotRow> = (left, right, columnId) => {
+  return compareDecimalAmounts(
+    String(left.getValue(columnId) ?? "0"),
+    String(right.getValue(columnId) ?? "0"),
+  );
 };
 
 function SortButton({
@@ -101,7 +97,7 @@ export function createColumns(): ColumnDef<SnapshotRow>[] {
       cell: ({ row }) => (
         <div className="text-right font-medium tabular-nums">{row.original.balance}</div>
       ),
-      sortingFn: bigintSorting,
+      sortingFn: decimalSorting,
     },
   ];
 }

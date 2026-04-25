@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { SnapshotWorkbench } from "@/components/snapshot-workbench";
-import { runSnapshot } from "@/lib/sui-snapshot.functions";
+import { runSnapshotBatch } from "@/lib/sui-snapshot.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,5 +19,5 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexRoute() {
-  return <SnapshotWorkbench runSnapshot={runSnapshot} />;
+  return <SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />;
 }

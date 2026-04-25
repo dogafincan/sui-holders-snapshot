@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { snapshotInputSchema } from "@/lib/sui-snapshot";
-import { fetchSuiHolderSnapshot } from "@/lib/sui-snapshot.server";
+import { snapshotPageBatchInputSchema } from "@/lib/sui-snapshot";
+import { fetchSuiHolderSnapshotBatch } from "@/lib/sui-snapshot.server";
 
-export const runSnapshot = createServerFn({ method: "POST" })
-  .inputValidator(snapshotInputSchema)
+export const runSnapshotBatch = createServerFn({ method: "POST" })
+  .inputValidator(snapshotPageBatchInputSchema)
   .handler(async ({ data }) => {
-    return fetchSuiHolderSnapshot(data);
+    return fetchSuiHolderSnapshotBatch(data);
   });

@@ -22,9 +22,8 @@ describe("snapshot workbench helpers", () => {
   it("creates a stable csv download payload", () => {
     const snapshot: SnapshotResult = {
       meta: {
-        endpoint: "https://graphql.mainnet.sui.io/graphql",
+        endpoint: "https://api.blockberry.one/sui/v1/coins",
         coinAddress: `0x${"2".padStart(64, "0")}::sui::SUI`,
-        decimals: 2,
         holderCount: 1,
         totalBalance: "5",
       },
