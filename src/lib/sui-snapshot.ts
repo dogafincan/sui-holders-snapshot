@@ -33,6 +33,7 @@ export interface SnapshotPageBatchResult {
   balances: SnapshotBalanceRow[];
   cursor: string | null;
   nextCursor: string | null;
+  decimals: number;
   pagesFetched: number;
   objectsFetched: number;
 }
@@ -93,6 +94,7 @@ export type SnapshotInput = z.infer<typeof snapshotInputSchema>;
 
 export const snapshotPageBatchInputSchema = snapshotInputSchema.extend({
   cursor: z.string().nullable(),
+  decimals: z.number().int().min(0).nullable().default(null),
 });
 
 export type SnapshotPageBatchInput = z.infer<typeof snapshotPageBatchInputSchema>;
@@ -224,6 +226,7 @@ export function buildSnapshotResult({
 
   const rows = Array.from(aggregatedBalances.entries())
     .map(([address, balance]) => ({ address, balance }))
+    .filter((row) => compareDecimalAmounts(row.balance, "0") > 0)
     .sort(compareSnapshotBalanceRows);
 
   const totalBalance = rows.reduce((total, row) => addDecimalAmounts(total, row.balance), "0");

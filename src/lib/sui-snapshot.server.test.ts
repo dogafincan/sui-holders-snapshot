@@ -99,6 +99,7 @@ describe("fetchSuiHolderSnapshotBatch", () => {
     const batch = await fetchSuiHolderSnapshotBatch({
       coinAddress: normalizeCoinType("0x2::sui::SUI"),
       cursor: null,
+      decimals: null,
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
@@ -123,6 +124,7 @@ describe("fetchSuiHolderSnapshotBatch", () => {
       ],
       cursor: null,
       nextCursor: null,
+      decimals: 2,
       pagesFetched: 2,
       objectsFetched: 4,
     });
@@ -146,6 +148,7 @@ describe("fetchSuiHolderSnapshotBatch", () => {
     const batch = await fetchSuiHolderSnapshotBatch({
       coinAddress: normalizeCoinType("0x2::sui::SUI"),
       cursor: "starting-cursor",
+      decimals: null,
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(36);
@@ -156,8 +159,37 @@ describe("fetchSuiHolderSnapshotBatch", () => {
       },
       cursor: "starting-cursor",
       nextCursor: "cursor-35",
+      decimals: 0,
       pagesFetched: 35,
       objectsFetched: 35,
+    });
+  });
+
+  it("uses carried decimals without refetching metadata on later batches", async () => {
+    fetchMock.mockResolvedValueOnce(
+      objectsResponse({
+        nodes: [{ owner: ADDRESS_A, balance: "125" }],
+        hasNextPage: false,
+        endCursor: null,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const batch = await fetchSuiHolderSnapshotBatch({
+      coinAddress: normalizeCoinType("0x2::sui::SUI"),
+      cursor: "after-cursor",
+      decimals: 2,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(readPostBody(0).variables).toEqual({
+      type: `0x2::coin::Coin<${normalizeCoinType("0x2::sui::SUI")}>`,
+      first: 50,
+      after: "after-cursor",
+    });
+    expect(batch).toMatchObject({
+      decimals: 2,
+      balances: [{ address: ADDRESS_A, balance: "1.25" }],
     });
   });
 
@@ -174,6 +206,7 @@ describe("fetchSuiHolderSnapshotBatch", () => {
     await fetchSuiHolderSnapshotBatch({
       coinAddress: normalizeCoinType("0x2::sui::SUI"),
       cursor: "after-cursor",
+      decimals: null,
     });
 
     const metadataBody = readPostBody(0);
@@ -201,6 +234,7 @@ describe("fetchSuiHolderSnapshotBatch", () => {
       fetchSuiHolderSnapshotBatch({
         coinAddress: normalizeCoinType("0x2::sui::SUI"),
         cursor: null,
+        decimals: null,
       }),
     ).rejects.toThrow("Missing data.objects in GraphQL response.");
   });
@@ -218,19 +252,52 @@ describe("fetchSuiHolderSnapshotBatch", () => {
       fetchSuiHolderSnapshotBatch({
         coinAddress: normalizeCoinType("0x2::sui::SUI"),
         cursor: null,
+        decimals: null,
       }),
     ).rejects.toThrow("Page size is too large: 100 > 50");
   });
 
-  it("throws on upstream non-200 responses", async () => {
-    fetchMock.mockResolvedValueOnce(new Response("{}", { status: 503 }));
+  it("retries transient GraphQL HTTP failures before failing the batch", async () => {
+    fetchMock
+      .mockResolvedValueOnce(metadataResponse())
+      .mockResolvedValueOnce(new Response("try again", { status: 503 }))
+      .mockResolvedValueOnce(
+        objectsResponse({
+          nodes: [{ owner: ADDRESS_A, balance: "250" }],
+          hasNextPage: false,
+          endCursor: null,
+        }),
+      );
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
       fetchSuiHolderSnapshotBatch({
         coinAddress: normalizeCoinType("0x2::sui::SUI"),
         cursor: null,
+        decimals: null,
+      }),
+    ).resolves.toMatchObject({
+      balances: [{ address: ADDRESS_A, balance: "2.5" }],
+      decimals: 2,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("throws on upstream non-200 responses", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("{}", { status: 503 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 503 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 503 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      fetchSuiHolderSnapshotBatch({
+        coinAddress: normalizeCoinType("0x2::sui::SUI"),
+        cursor: null,
+        decimals: null,
       }),
     ).rejects.toThrow("Sui GraphQL request failed with HTTP 503.");
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 });

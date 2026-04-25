@@ -4,6 +4,7 @@ import {
   formatUnits,
   normalizeSuiAddress,
   type SnapshotBalanceRow,
+  type SnapshotInput,
   type SnapshotPageBatchInput,
   type SnapshotPageBatchResult,
   type SnapshotResult,
@@ -13,6 +14,9 @@ const DEFAULT_ENDPOINT = "https://graphql.mainnet.sui.io/graphql";
 const REQUEST_TIMEOUT_MS = 45_000;
 const PAGE_SIZE = 50;
 const PAGES_PER_BATCH = 35;
+const TRANSIENT_HTTP_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+const MAX_TRANSIENT_RETRIES = 3;
+const BASE_RETRY_DELAY_MS = 250;
 
 const COIN_METADATA_QUERY = `
 query CoinMetadata($coinType: String!) {
@@ -95,6 +99,54 @@ interface ObjectsResponse {
   } | null;
 }
 
+function isTransientHttpStatus(status: number) {
+  return TRANSIENT_HTTP_STATUS_CODES.has(status);
+}
+
+function readRetryDelay(response: Response, attempt: number) {
+  const retryAfter = response.headers.get("retry-after");
+
+  if (retryAfter) {
+    const retryAfterSeconds = Number.parseFloat(retryAfter);
+    if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+      return retryAfterSeconds * 1000;
+    }
+
+    const retryAfterDate = Date.parse(retryAfter);
+    if (Number.isFinite(retryAfterDate)) {
+      return Math.max(retryAfterDate - Date.now(), 0);
+    }
+  }
+
+  return BASE_RETRY_DELAY_MS * 2 ** attempt;
+}
+
+async function waitForRetry(ms: number, signal: AbortSignal) {
+  if (ms <= 0) {
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      signal.removeEventListener("abort", handleAbort);
+      resolve();
+    }, ms);
+
+    function handleAbort() {
+      clearTimeout(timeout);
+      signal.removeEventListener("abort", handleAbort);
+      reject(new DOMException("The operation was aborted.", "AbortError"));
+    }
+
+    if (signal.aborted) {
+      handleAbort();
+      return;
+    }
+
+    signal.addEventListener("abort", handleAbort, { once: true });
+  });
+}
+
 async function resolveEndpoint() {
   try {
     const cloudflare = (await import("cloudflare:workers")) as {
@@ -118,14 +170,28 @@ async function postGraphQL<TData>(
   variables: Record<string, unknown>,
   signal: AbortSignal,
 ) {
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ query, variables }),
-    signal,
-  });
+  let response: Response;
+
+  for (let attempt = 0; ; attempt += 1) {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ query, variables }),
+      signal,
+    });
+
+    if (
+      response.ok ||
+      !isTransientHttpStatus(response.status) ||
+      attempt >= MAX_TRANSIENT_RETRIES
+    ) {
+      break;
+    }
+
+    await waitForRetry(readRetryDelay(response, attempt), signal);
+  }
 
   if (!response.ok) {
     throw new Error(`Sui GraphQL request failed with HTTP ${response.status}.`);
@@ -188,7 +254,8 @@ export async function fetchSuiHolderSnapshotBatch(
   const timeout = globalThis.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const decimals = await fetchCoinDecimals(endpoint, input.coinAddress, controller.signal);
+    const decimals =
+      input.decimals ?? (await fetchCoinDecimals(endpoint, input.coinAddress, controller.signal));
     const balances = new Map<string, string>();
     let cursor = input.cursor;
     let nextCursor: string | null = input.cursor;
@@ -243,6 +310,7 @@ export async function fetchSuiHolderSnapshotBatch(
       balances: Array.from(balances.entries()).map(([address, balance]) => ({ address, balance })),
       cursor: input.cursor,
       nextCursor: reachedLastPage ? null : nextCursor,
+      decimals,
       pagesFetched,
       objectsFetched,
     };
@@ -258,17 +326,20 @@ export async function fetchSuiHolderSnapshotBatch(
 }
 
 export async function fetchSuiHolderSnapshot(
-  input: Omit<SnapshotPageBatchInput, "cursor">,
+  input: SnapshotInput & { decimals?: number | null },
 ): Promise<SnapshotResult> {
   const balances: SnapshotBalanceRow[] = [];
   let cursor: string | null = null;
+  let decimals = input.decimals ?? null;
 
   while (true) {
     const batch = await fetchSuiHolderSnapshotBatch({
       ...input,
       cursor,
+      decimals,
     });
 
+    decimals = batch.decimals;
     balances.push(...batch.balances);
 
     if (batch.nextCursor === null) {

@@ -72,6 +72,7 @@ describe("sui snapshot helpers", () => {
           { address: ADDRESS_A, balance: "1.5" },
           { address: ADDRESS_A, balance: "0.25" },
           { address: `0x${"2".padStart(64, "0")}`, balance: "2" },
+          { address: `0x${"3".padStart(64, "0")}`, balance: "0" },
         ],
       }),
     ).toEqual({
@@ -96,5 +97,28 @@ describe("sui snapshot helpers", () => {
         },
       ],
     });
+  });
+
+  it("excludes zero-balance addresses from holder rows and totals", () => {
+    const snapshot = buildSnapshotResult({
+      endpoint: "https://graphql.mainnet.sui.io/graphql",
+      coinAddress: normalizeCoinType("0x2::sui::SUI"),
+      balances: [
+        { address: ADDRESS_A, balance: "0" },
+        { address: `0x${"2".padStart(64, "0")}`, balance: "0.000" },
+        { address: `0x${"3".padStart(64, "0")}`, balance: "0.5" },
+      ],
+    });
+
+    expect(snapshot.meta.holderCount).toBe(1);
+    expect(snapshot.meta.totalBalance).toBe("0.5");
+    expect(snapshot.rows).toEqual([
+      {
+        rank: 1,
+        address: `0x${"3".padStart(64, "0")}`,
+        balance: "0.5",
+        rawBalance: "0.5",
+      },
+    ]);
   });
 });
