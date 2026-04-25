@@ -63,7 +63,7 @@ export function createColumns(): ColumnDef<SnapshotRow>[] {
   return [
     {
       accessorKey: "rank",
-      header: "Rank",
+      header: "Balance rank",
       cell: ({ row }) => <span className="font-medium tabular-nums">{row.original.rank}</span>,
       enableSorting: false,
       size: 64,
@@ -151,7 +151,7 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
         <div className="flex flex-col gap-1">
           <p className="font-medium">Holder distribution</p>
           <p className="text-sm text-muted-foreground">
-            {filteredRows} visible holder{filteredRows === 1 ? "" : "s"} across{" "}
+            {filteredRows} visible non-zero holder{filteredRows === 1 ? "" : "s"} across{" "}
             {Math.max(table.getPageCount(), 1)} page
             {table.getPageCount() === 1 ? "" : "s"}.
           </p>

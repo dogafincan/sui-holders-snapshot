@@ -1,5 +1,5 @@
-import { startTransition, type FormEvent, type ReactNode, useState } from "react";
-import { Download, LoaderCircle, Sparkles } from "lucide-react";
+import { startTransition, type FormEvent, type ReactNode, useRef, useState } from "react";
+import { CircleStop, Download, LoaderCircle, RotateCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { HoldersTable } from "@/components/holders-table";
@@ -33,14 +33,45 @@ interface SnapshotProgress {
   pagesFetched: number;
 }
 
+interface SnapshotRunState extends SnapshotProgress {
+  payload: SnapshotInput;
+  balances: SnapshotBalanceRow[];
+  nextCursor: string | null;
+  decimals: number | null;
+  endpoint: string | null;
+}
+
 const BATCH_PAUSE_MS = 1_500;
 
 function formatInteger(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function formatCoinObjectProgress(value: number) {
+  return `${formatInteger(value)} coin object${value === 1 ? "" : "s"} scanned`;
+}
+
+function getNormalizedCoinAddress(value: string) {
+  try {
+    return buildSnapshotInputFromForm({ coinAddress: value }).coinAddress;
+  } catch {
+    return null;
+  }
+}
+
+function wait(ms: number, cancelWaitRef: { current: (() => void) | null }) {
+  return new Promise<void>((resolve) => {
+    const timeout = setTimeout(() => {
+      cancelWaitRef.current = null;
+      resolve();
+    }, ms);
+
+    cancelWaitRef.current = () => {
+      clearTimeout(timeout);
+      cancelWaitRef.current = null;
+      resolve();
+    };
+  });
 }
 
 function downloadSnapshot(snapshot: SnapshotResult) {
@@ -116,7 +147,7 @@ function EmptyState() {
           <CardHeader>
             <CardTitle>Live snapshot</CardTitle>
             <CardDescription>
-              Scan live coin objects and aggregate balances by owner address.
+              Scan live coin objects and aggregate non-zero balances by owner address.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -139,38 +170,41 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
   const [formError, setFormError] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [snapshotProgress, setSnapshotProgress] = useState<SnapshotProgress | null>(null);
+  const [pausedRun, setPausedRun] = useState<SnapshotRunState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const cancelRequestedRef = useRef(false);
+  const cancelWaitRef = useRef<(() => void) | null>(null);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFormError(null);
+  const normalizedInputCoinAddress = getNormalizedCoinAddress(coinAddress);
+  const hasStaleSnapshot =
+    snapshot !== null && normalizedInputCoinAddress !== snapshot.meta.coinAddress;
+
+  async function runSnapshotFromState(initialState: SnapshotRunState) {
     setRequestError(null);
-
-    let payload: SnapshotInput;
-    try {
-      payload = buildSnapshotInputFromForm({
-        coinAddress,
-      });
-    } catch (error) {
-      setFormError(toErrorMessage(error));
-      return;
-    }
-
+    setPausedRun(null);
     setIsSubmitting(true);
-    setSnapshotProgress({ objectsFetched: 0, pagesFetched: 0 });
+    setSnapshotProgress({
+      objectsFetched: initialState.objectsFetched,
+      pagesFetched: initialState.pagesFetched,
+    });
+    cancelRequestedRef.current = false;
+
+    const payload = initialState.payload;
 
     try {
-      const balances: SnapshotBalanceRow[] = [];
-      let nextCursor: string | null = null;
-      let pagesFetched = 0;
-      let objectsFetched = 0;
-      let endpoint: string | null = null;
+      const balances: SnapshotBalanceRow[] = [...initialState.balances];
+      let nextCursor = initialState.nextCursor;
+      let decimals = initialState.decimals;
+      let pagesFetched = initialState.pagesFetched;
+      let objectsFetched = initialState.objectsFetched;
+      let endpoint = initialState.endpoint;
 
       while (true) {
         const batch = await runSnapshotBatch({
           data: {
             ...payload,
             cursor: nextCursor,
+            decimals,
           },
         });
 
@@ -179,6 +213,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
         }
 
         endpoint = batch.meta.endpoint;
+        decimals = batch.decimals;
         balances.push(...batch.balances);
         pagesFetched += batch.pagesFetched;
         objectsFetched += batch.objectsFetched;
@@ -192,7 +227,33 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
           break;
         }
 
-        await wait(BATCH_PAUSE_MS);
+        if (cancelRequestedRef.current) {
+          setPausedRun({
+            payload,
+            balances,
+            nextCursor,
+            decimals,
+            pagesFetched,
+            objectsFetched,
+            endpoint,
+          });
+          return;
+        }
+
+        await wait(BATCH_PAUSE_MS, cancelWaitRef);
+
+        if (cancelRequestedRef.current) {
+          setPausedRun({
+            payload,
+            balances,
+            nextCursor,
+            decimals,
+            pagesFetched,
+            objectsFetched,
+            endpoint,
+          });
+          return;
+        }
       }
 
       const nextSnapshot = buildSnapshotResult({
@@ -212,9 +273,59 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
       });
       toast.error(message);
     } finally {
+      cancelRequestedRef.current = false;
+      cancelWaitRef.current = null;
       setIsSubmitting(false);
       setSnapshotProgress(null);
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError(null);
+    setRequestError(null);
+
+    let payload: SnapshotInput;
+    try {
+      payload = buildSnapshotInputFromForm({
+        coinAddress,
+      });
+    } catch (error) {
+      setFormError(toErrorMessage(error));
+      return;
+    }
+
+    setSnapshot(null);
+    await runSnapshotFromState({
+      payload,
+      balances: [],
+      nextCursor: null,
+      decimals: null,
+      pagesFetched: 0,
+      objectsFetched: 0,
+      endpoint: null,
+    });
+  }
+
+  function handleCoinAddressChange(value: string) {
+    setCoinAddress(value);
+    setFormError(null);
+    setRequestError(null);
+    setPausedRun(null);
+  }
+
+  function handleCancelSnapshot() {
+    cancelRequestedRef.current = true;
+    cancelWaitRef.current?.();
+  }
+
+  async function handleResumeSnapshot() {
+    if (!pausedRun) {
+      return;
+    }
+
+    setSnapshot(null);
+    await runSnapshotFromState(pausedRun);
   }
 
   function handleDownload() {
@@ -252,7 +363,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
                   <Input
                     id="coin-address"
                     value={coinAddress}
-                    onChange={(event) => setCoinAddress(event.target.value)}
+                    onChange={(event) => handleCoinAddressChange(event.target.value)}
                     placeholder="0x2::sui::SUI"
                     autoComplete="off"
                   />
@@ -275,21 +386,45 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
                 </Alert>
               ) : null}
 
-              <Button type="submit" size="lg" disabled={isSubmitting}>
+              {pausedRun && !isSubmitting ? (
+                <Alert>
+                  <Sparkles />
+                  <AlertTitle>Snapshot paused</AlertTitle>
+                  <AlertDescription>
+                    Resume from {formatCoinObjectProgress(pausedRun.objectsFetched)}.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
+              <div className="flex flex-col gap-2">
+                <Button type="submit" size="lg" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <LoaderCircle className="animate-spin" data-icon="inline-start" />
+                      {snapshotProgress && snapshotProgress.pagesFetched > 0
+                        ? formatCoinObjectProgress(snapshotProgress.objectsFetched)
+                        : "Running snapshot"}
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles data-icon="inline-start" />
+                      Generate snapshot
+                    </>
+                  )}
+                </Button>
+
                 {isSubmitting ? (
-                  <>
-                    <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                    {snapshotProgress && snapshotProgress.pagesFetched > 0
-                      ? `${formatInteger(snapshotProgress.objectsFetched)} coin objects scanned`
-                      : "Running snapshot"}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles data-icon="inline-start" />
-                    Generate snapshot
-                  </>
-                )}
-              </Button>
+                  <Button type="button" variant="outline" onClick={handleCancelSnapshot}>
+                    <CircleStop data-icon="inline-start" />
+                    Cancel snapshot
+                  </Button>
+                ) : pausedRun ? (
+                  <Button type="button" variant="outline" onClick={handleResumeSnapshot}>
+                    <RotateCw data-icon="inline-start" />
+                    Resume snapshot
+                  </Button>
+                ) : null}
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -297,16 +432,26 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
         <div className="flex flex-col gap-6">
           {snapshot ? (
             <>
+              {hasStaleSnapshot ? (
+                <Alert>
+                  <Sparkles />
+                  <AlertTitle>Input changed</AlertTitle>
+                  <AlertDescription>
+                    Generate a new snapshot to refresh these results.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
               <div className="grid gap-4 md:grid-cols-3">
                 <SummaryCard
                   label="Holders"
                   value={formatInteger(snapshot.meta.holderCount)}
-                  description="Coin object balances aggregated by owner."
+                  description="Non-zero balances aggregated by owner."
                 />
                 <SummaryCard
                   label="Total balance"
                   value={snapshot.meta.totalBalance}
-                  description="Sum of the returned holder balances."
+                  description="Sum of the returned non-zero holder balances."
                 />
                 <SummaryCard
                   label="CSV format"

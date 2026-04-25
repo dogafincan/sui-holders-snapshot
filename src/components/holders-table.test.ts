@@ -24,7 +24,7 @@ function makeRows(count: number): SnapshotRow[] {
       rank: index + 1,
       address: makeAddress(descending),
       balance: `${descending}.00`,
-      rawBalance: `${descending * 100}`,
+      rawBalance: `${descending}.00`,
     };
   });
 }
@@ -54,7 +54,7 @@ function buildTable(
 }
 
 describe("holders table model", () => {
-  it("sorts by raw balances using bigint semantics", () => {
+  it("sorts by decimal balance values", () => {
     const rows = makeRows(3);
     const table = buildTable(rows, [{ id: "rawBalance", desc: true }], [], {
       pageIndex: 0,
@@ -66,6 +66,12 @@ describe("holders table model", () => {
       makeAddress(2),
       makeAddress(1),
     ]);
+  });
+
+  it("labels rank as balance rank", () => {
+    const rankHeader = createColumns()[0]?.header;
+
+    expect(rankHeader).toBe("Balance rank");
   });
 
   it("filters the holder list by address fragment", () => {
