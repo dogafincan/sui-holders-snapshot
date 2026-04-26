@@ -47,6 +47,7 @@ describe("SnapshotWorkbench", () => {
     render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
     const holderDistribution = screen.getByText("Holder distribution");
     const tableControlRow = holderDistribution.parentElement?.parentElement;
+    const filterField = screen.getByText("Filter by address").closest('[data-slot="field"]');
     const tablePagination = screen.getByRole("button", { name: "Previous" }).parentElement
       ?.parentElement;
     const tablePaginationClasses = tablePagination?.className.split(/\s+/) ?? [];
@@ -57,6 +58,9 @@ describe("SnapshotWorkbench", () => {
     expect(screen.getByText("Search the current snapshot.")).toBeTruthy();
     expect(screen.getByText("No holders match the current address filter.")).toBeTruthy();
     expect(tableControlRow?.className).toContain("lg:items-start");
+    expect(tableControlRow?.className).toContain("lg:grid-cols-2");
+    expect(tableControlRow?.className).not.toContain("lg:flex-row");
+    expect(filterField?.className).not.toContain("lg:max-w-sm");
     expect(tablePagination?.className).toContain("mt-auto");
     expect(tablePaginationClasses).toContain("flex-row");
     expect(tablePaginationClasses).toContain("items-center");

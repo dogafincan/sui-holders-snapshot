@@ -150,7 +150,7 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
 
   return (
     <div className="flex h-full min-h-[28rem] flex-col gap-4">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         <div className="flex flex-col gap-1">
           <p className="font-medium">Holder distribution</p>
           <p className="text-sm text-muted-foreground">
@@ -158,7 +158,7 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
           </p>
         </div>
 
-        <Field className="w-full lg:max-w-sm">
+        <Field className="w-full min-w-0">
           <FieldLabel htmlFor="holders-filter">Filter by address</FieldLabel>
           <FieldDescription>Search the current snapshot.</FieldDescription>
           <Input
