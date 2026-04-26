@@ -32,7 +32,7 @@ Core behavior:
 
 - `src/routes/index.tsx`: app entry route
 - `src/routes/__root.tsx`: root document and global app shell
-- `src/components/snapshot-workbench.tsx`: page layout, form workflow, loading states, and results card
+- `src/components/snapshot-workbench.tsx`: page layout, form workflow, initial empty table, loading states, and results card
 - `src/components/holders-table.tsx`: live table module with sorting, filtering, and pagination
 - `src/components/ui/field.tsx`: shadcn field composition for form structure
 - `src/lib/sui-snapshot.server.ts`: server-side snapshot execution
@@ -97,6 +97,9 @@ aligned with `wrangler.jsonc`.
   - route `/`
   - input: `coinAddress`
   - output: ranked non-zero rows with `rank`, `address`, and `balance`
+- Keep the holders table visible before a snapshot exists by rendering the table
+  with empty rows. Only show snapshot metadata and CSV download controls after a
+  snapshot has completed.
 - Preserve the canonical CSV contract: `rank,address,balance`. Do not add
   airdrop amount columns here; airdrop amounts are chosen exclusively in
   `sui-airdrop`.
@@ -127,6 +130,9 @@ If you change Worker bindings or env usage, also run:
 ## Notes
 
 - The original CLI script is intentionally gone; this repo is now app-first.
+- Initial right-column content is the empty holders table. Summary cards,
+  ready-to-run explainer cards, and snapshot-type pills were intentionally
+  removed from the UI.
 - Snapshot accuracy is based on live pagination over Sui GraphQL RPC, so it can
   drift slightly while large holder sets are scanned.
 - Zero-balance coin objects are excluded from holder counts, table rows, and CSV

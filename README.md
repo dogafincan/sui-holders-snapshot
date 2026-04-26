@@ -6,7 +6,8 @@ The app:
 
 - scans Sui GraphQL RPC for live `Coin<T>` objects in Worker-safe page batches,
 - aggregates non-zero balances by owner address,
-- renders the full result set in a TanStack Table UI,
+- keeps an empty holders table visible before the first run,
+- renders the full result set in a TanStack Table UI after a snapshot completes,
 - exports the same rows as CSV without rerunning the snapshot.
 
 ## Toolchain
@@ -30,6 +31,7 @@ Input:
 
 Output:
 
+- empty holder table before the first snapshot
 - ranked non-zero holder table
 - client-side CSV download with exactly `rank,address,balance`
 
@@ -49,7 +51,7 @@ Output:
 
 - `src/routes/index.tsx`: route entrypoint for `/`
 - `src/routes/__root.tsx`: root document and global app shell
-- `src/components/snapshot-workbench.tsx`: page layout, form, loading states, summary cards, and results card
+- `src/components/snapshot-workbench.tsx`: page layout, form, initial empty table, loading states, and results card
 - `src/components/holders-table.tsx`: TanStack Table configuration, filtering, sorting, and pagination
 - `src/components/ui/field.tsx`: shadcn field composition used for form layout
 - `src/lib/sui-snapshot.server.ts`: Sui GraphQL holder page-batch execution
@@ -160,6 +162,9 @@ vp run cf-typegen
 - The UI is intentionally constrained to stock shadcn `base-luma` styling with the
   applied preset. Prefer stock shadcn components and minimal layout classes.
   Avoid custom page chrome, decorative shells, or bespoke visual treatments.
+- The holders table is intentionally visible before a snapshot exists. Keep that
+  initial state empty, without snapshot metadata, CSV controls, summary cards, or
+  explanatory placeholder cards.
 - Snapshot accuracy is based on live pagination over Sui GraphQL RPC, so it can
   drift slightly while large holder sets are scanned.
 - Zero-balance coin objects are excluded from holder counts, table rows, and CSV
