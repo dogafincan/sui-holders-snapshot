@@ -2,9 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   createTable,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
-  type ColumnFiltersState,
   type PaginationState,
 } from "@tanstack/react-table";
 
@@ -27,23 +25,17 @@ function makeRows(count: number): SnapshotRow[] {
   });
 }
 
-function buildTable(
-  rows: SnapshotRow[],
-  columnFilters: ColumnFiltersState,
-  pagination: PaginationState,
-) {
+function buildTable(rows: SnapshotRow[], pagination: PaginationState) {
   return createTable({
     data: rows,
     columns: createColumns(),
     state: {
-      columnFilters,
       pagination,
     },
     enableSorting: false,
     onStateChange: () => undefined,
     renderFallbackValue: null,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getRowId: (row) => row.address,
   });
@@ -52,7 +44,7 @@ function buildTable(
 describe("holders table model", () => {
   it("preserves the returned holder order", () => {
     const rows = makeRows(3).reverse();
-    const table = buildTable(rows, [], {
+    const table = buildTable(rows, {
       pageIndex: 0,
       pageSize: HOLDERS_TABLE_PAGE_SIZE,
     });
@@ -67,22 +59,12 @@ describe("holders table model", () => {
 
     expect(columns.map((column) => column.header)).toEqual(["Rank", "Address", "Balance"]);
     expect(columns.every((column) => column.enableSorting === false)).toBe(true);
-  });
-
-  it("filters the holder list by address fragment", () => {
-    const rows = makeRows(10);
-    const target = rows[7]!.address;
-    const table = buildTable(rows, [{ id: "address", value: target }], {
-      pageIndex: 0,
-      pageSize: HOLDERS_TABLE_PAGE_SIZE,
-    });
-
-    expect(table.getRowModel().rows.map((row) => row.original.address)).toEqual([target]);
+    expect(columns.some((column) => "filterFn" in column)).toBe(false);
   });
 
   it("paginates the full data set using the exported page size", () => {
     const rows = makeRows(HOLDERS_TABLE_PAGE_SIZE + 5);
-    const table = buildTable(rows, [], {
+    const table = buildTable(rows, {
       pageIndex: 1,
       pageSize: HOLDERS_TABLE_PAGE_SIZE,
     });

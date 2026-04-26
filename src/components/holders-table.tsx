@@ -1,19 +1,15 @@
-import { useDeferredValue, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
   type ColumnDef,
-  type ColumnFiltersState,
   type PaginationState,
 } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -40,10 +36,6 @@ export function createColumns(): ColumnDef<SnapshotRow>[] {
       header: "Address",
       cell: ({ row }) => <code className="font-mono">{row.original.address}</code>,
       enableSorting: false,
-      filterFn: (row, columnId, value) => {
-        const haystack = String(row.getValue(columnId)).toLowerCase();
-        return haystack.includes(String(value).toLowerCase());
-      },
     },
     {
       accessorKey: "rawBalance",
@@ -61,19 +53,6 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
     pageIndex: 0,
     pageSize: HOLDERS_TABLE_PAGE_SIZE,
   });
-  const [addressFilterInput, setAddressFilterInput] = useState("");
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-
-  const deferredAddressFilter = useDeferredValue(addressFilterInput);
-
-  useEffect(() => {
-    setColumnFilters(
-      deferredAddressFilter
-        ? [{ id: "address", value: deferredAddressFilter.trim().toLowerCase() }]
-        : [],
-    );
-    setPagination((current) => ({ ...current, pageIndex: 0 }));
-  }, [deferredAddressFilter]);
 
   useEffect(() => {
     setPagination((current) => ({ ...current, pageIndex: 0 }));
@@ -84,42 +63,26 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
     columns: createColumns(),
     state: {
       pagination,
-      columnFilters,
     },
     enableSorting: false,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getRowId: (row) => row.address,
   });
 
-  const filteredRows = table.getFilteredRowModel().rows.length;
+  const holderCount = rows.length;
   const pageCount = Math.max(table.getPageCount(), 1);
-  const holderLabel = filteredRows === 1 ? "holder" : "holders";
+  const holderLabel = holderCount === 1 ? "holder" : "holders";
   const pageLabel = pageCount === 1 ? "page" : "pages";
 
   return (
     <div className="flex h-full min-h-[28rem] flex-col gap-4">
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        <div className="flex flex-col gap-1">
-          <p className="font-medium">Holder distribution</p>
-          <p className="text-sm text-muted-foreground">
-            {filteredRows} {holderLabel} across {pageCount} {pageLabel}.
-          </p>
-        </div>
-
-        <Field className="w-full min-w-0">
-          <FieldLabel htmlFor="holders-filter">Filter by address</FieldLabel>
-          <FieldDescription>Search the current snapshot.</FieldDescription>
-          <Input
-            id="holders-filter"
-            value={addressFilterInput}
-            onChange={(event) => setAddressFilterInput(event.target.value)}
-            placeholder="0x..."
-            aria-label="Filter holder table by address"
-          />
-        </Field>
+      <div className="flex flex-col gap-1">
+        <p className="font-medium">Ranked holders</p>
+        <p className="text-sm text-muted-foreground">
+          {holderCount} {holderLabel} across {pageCount} {pageLabel}.
+        </p>
       </div>
 
       <div className="min-h-0 flex-1">
@@ -154,7 +117,7 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={3} className="py-10 text-center text-muted-foreground">
-                  No holders match the current address filter.
+                  No holders to display.
                 </TableCell>
               </TableRow>
             )}

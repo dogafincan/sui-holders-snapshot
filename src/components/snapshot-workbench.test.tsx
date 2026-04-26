@@ -45,28 +45,26 @@ describe("SnapshotWorkbench", () => {
   it("renders an empty holder table before a snapshot is generated", () => {
     const runSnapshotBatch = vi.fn();
     render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
-    const holderDistribution = screen.getByText("Holder distribution");
-    const tableControlRow = holderDistribution.parentElement?.parentElement;
-    const filterField = screen.getByText("Filter by address").closest('[data-slot="field"]');
+    const rankedHolders = screen.getByText("Ranked holders");
     const tablePagination = screen.getByRole("button", { name: "Previous" }).parentElement
       ?.parentElement;
     const tablePaginationClasses = tablePagination?.className.split(/\s+/) ?? [];
-    const tableCard = holderDistribution.closest('[data-slot="card"]');
+    const tableCard = rankedHolders.closest('[data-slot="card"]');
 
-    expect(holderDistribution).toBeTruthy();
+    expect(rankedHolders).toBeTruthy();
     expect(screen.getByText("0 holders across 1 page.")).toBeTruthy();
-    expect(screen.getByText("Search the current snapshot.")).toBeTruthy();
     expect(screen.getByText("Rank")).toBeTruthy();
     expect(screen.getByText("Address")).toBeTruthy();
     expect(screen.getByText("Balance")).toBeTruthy();
-    expect(screen.getByText("No holders match the current address filter.")).toBeTruthy();
+    expect(screen.getByText("No holders to display.")).toBeTruthy();
+    expect(screen.queryByText("Filter by address")).toBeNull();
+    expect(screen.queryByText("Search the current snapshot.")).toBeNull();
+    expect(screen.queryByLabelText("Filter holder table by address")).toBeNull();
+    expect(screen.queryByText("No holders match the current address filter.")).toBeNull();
+    expect(screen.queryByText("Holder distribution")).toBeNull();
     expect(screen.queryByText("Balance rank")).toBeNull();
     expect(screen.queryByRole("button", { name: "Address" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Balance" })).toBeNull();
-    expect(tableControlRow?.className).toContain("lg:items-start");
-    expect(tableControlRow?.className).toContain("lg:grid-cols-2");
-    expect(tableControlRow?.className).not.toContain("lg:flex-row");
-    expect(filterField?.className).not.toContain("lg:max-w-sm");
     expect(tablePagination?.className).toContain("mt-auto");
     expect(tablePaginationClasses).toContain("flex-row");
     expect(tablePaginationClasses).toContain("items-center");
