@@ -53,7 +53,8 @@ describe("SnapshotWorkbench", () => {
     const tableCard = holderDistribution.closest('[data-slot="card"]');
 
     expect(holderDistribution).toBeTruthy();
-    expect(screen.getByText("0 visible non-zero holders across 1 pages.")).toBeTruthy();
+    expect(screen.getByText("0 holders across 1 page.")).toBeTruthy();
+    expect(screen.getByText("Search the current snapshot.")).toBeTruthy();
     expect(screen.getByText("No holders match the current address filter.")).toBeTruthy();
     expect(tableControlRow?.className).toContain("lg:items-start");
     expect(tablePagination?.className).toContain("mt-auto");
@@ -122,6 +123,7 @@ describe("SnapshotWorkbench", () => {
     fireEvent.click(screen.getByRole("button", { name: "Generate snapshot" }));
 
     expect(await screen.findByText("Snapshot results")).toBeTruthy();
+    expect(screen.getByText("1 holder across 1 page.")).toBeTruthy();
     expect(screen.queryByText("Holder snapshot")).toBeNull();
     expect(screen.getByText(coinAddress).className).toContain("truncate");
     expect(screen.getByRole("button", { name: "Download CSV" }).className).toContain("w-full");

@@ -144,6 +144,9 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
   });
 
   const filteredRows = table.getFilteredRowModel().rows.length;
+  const pageCount = Math.max(table.getPageCount(), 1);
+  const holderLabel = filteredRows === 1 ? "holder" : "holders";
+  const pageLabel = pageCount === 1 ? "page" : "pages";
 
   return (
     <div className="flex h-full min-h-[28rem] flex-col gap-4">
@@ -151,17 +154,13 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
         <div className="flex flex-col gap-1">
           <p className="font-medium">Holder distribution</p>
           <p className="text-sm text-muted-foreground">
-            {filteredRows} visible non-zero holder{filteredRows === 1 ? "" : "s"} across{" "}
-            {Math.max(table.getPageCount(), 1)} page
-            {table.getPageCount() === 1 ? "" : "s"}.
+            {filteredRows} {holderLabel} across {pageCount} {pageLabel}.
           </p>
         </div>
 
         <Field className="w-full lg:max-w-sm">
           <FieldLabel htmlFor="holders-filter">Filter by address</FieldLabel>
-          <FieldDescription>
-            Search the current response without rerunning the snapshot.
-          </FieldDescription>
+          <FieldDescription>Search the current snapshot.</FieldDescription>
           <Input
             id="holders-filter"
             value={addressFilterInput}
