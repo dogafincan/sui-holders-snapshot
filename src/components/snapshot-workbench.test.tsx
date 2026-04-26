@@ -42,6 +42,17 @@ describe("SnapshotWorkbench", () => {
     expect(container.querySelector(".lucide-camera")).not.toBeNull();
   });
 
+  it("renders an empty holder table before a snapshot is generated", () => {
+    const runSnapshotBatch = vi.fn();
+    render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
+
+    expect(screen.getByText("Holder distribution")).toBeTruthy();
+    expect(screen.getByText("0 visible non-zero holders across 1 pages.")).toBeTruthy();
+    expect(screen.getByText("No holders match the current address filter.")).toBeTruthy();
+    expect(screen.queryByText("Snapshot results")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Download CSV" })).toBeNull();
+  });
+
   it("clears validation errors when the coin input changes", async () => {
     const runSnapshotBatch = vi.fn();
     render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);

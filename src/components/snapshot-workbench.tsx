@@ -106,6 +106,16 @@ function ResultsSkeleton() {
   );
 }
 
+function EmptyHolderTable() {
+  return (
+    <Card>
+      <CardContent>
+        <HoldersTable rows={[]} />
+      </CardContent>
+    </Card>
+  );
+}
+
 export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunSnapshotBatch }) {
   const [coinAddress, setCoinAddress] = useState(DEFAULT_COIN_ADDRESS);
   const [snapshot, setSnapshot] = useState<SnapshotResult | null>(null);
@@ -414,7 +424,9 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
             </>
           ) : isSubmitting ? (
             <ResultsSkeleton />
-          ) : null}
+          ) : (
+            <EmptyHolderTable />
+          )}
         </div>
       </section>
     </main>
