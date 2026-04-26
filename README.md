@@ -52,7 +52,7 @@ Output:
 - `src/routes/index.tsx`: route entrypoint for `/`
 - `src/routes/__root.tsx`: root document and global app shell
 - `src/components/snapshot-workbench.tsx`: page layout, form, initial empty table, loading states, and results card
-- `src/components/holders-table.tsx`: TanStack Table configuration, filtering, sorting, and pagination
+- `src/components/holders-table.tsx`: static ranked holders table configuration and pagination
 - `src/components/ui/field.tsx`: shadcn field composition used for form layout
 - `src/lib/sui-snapshot.server.ts`: Sui GraphQL holder page-batch execution
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
@@ -165,6 +165,8 @@ vp run cf-typegen
 - The holders table is intentionally visible before a snapshot exists. Keep that
   initial state empty, without snapshot metadata, CSV controls, summary cards, or
   explanatory placeholder cards.
+- The holders table intentionally has no client-side sorting or filtering. Keep
+  rows in the returned ranked order.
 - Snapshot accuracy is based on live pagination over Sui GraphQL RPC, so it can
   drift slightly while large holder sets are scanned.
 - Zero-balance coin objects are excluded from holder counts, table rows, and CSV

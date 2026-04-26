@@ -33,7 +33,7 @@ Core behavior:
 - `src/routes/index.tsx`: app entry route
 - `src/routes/__root.tsx`: root document and global app shell
 - `src/components/snapshot-workbench.tsx`: page layout, form workflow, initial empty table, loading states, and results card
-- `src/components/holders-table.tsx`: live table module with sorting, filtering, and pagination
+- `src/components/holders-table.tsx`: static ranked holders table module with pagination
 - `src/components/ui/field.tsx`: shadcn field composition for form structure
 - `src/lib/sui-snapshot.server.ts`: server-side snapshot execution
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
@@ -100,6 +100,9 @@ aligned with `wrangler.jsonc`.
 - Keep the holders table visible before a snapshot exists by rendering the table
   with empty rows. Only show snapshot metadata and CSV download controls after a
   snapshot has completed.
+- Keep the holders table static after rows are returned. Do not add client-side
+  sorting or filtering unless explicitly requested; the returned ranked order is
+  the table order.
 - Preserve the canonical CSV contract: `rank,address,balance`. Do not add
   airdrop amount columns here; airdrop amounts are chosen exclusively in
   `sui-airdrop`.
