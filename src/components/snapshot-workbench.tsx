@@ -1,4 +1,4 @@
-import { startTransition, type FormEvent, type ReactNode, useRef, useState } from "react";
+import { startTransition, type FormEvent, useRef, useState } from "react";
 import { Camera, CircleStop, Download, LoaderCircle, RotateCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -88,39 +88,9 @@ function downloadSnapshot(snapshot: SnapshotResult) {
   URL.revokeObjectURL(url);
 }
 
-function SummaryCard({
-  label,
-  value,
-  description,
-}: {
-  label: string;
-  value: ReactNode;
-  description: string;
-}) {
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl font-semibold tracking-tight tabular-nums">
-          {value}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
 function ResultsSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
-      </div>
-
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-3">
@@ -410,24 +380,6 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
                   </AlertDescription>
                 </Alert>
               ) : null}
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <SummaryCard
-                  label="Holders"
-                  value={formatInteger(snapshot.meta.holderCount)}
-                  description="Non-zero balances aggregated by owner."
-                />
-                <SummaryCard
-                  label="Total balance"
-                  value={snapshot.meta.totalBalance}
-                  description="Sum of the returned non-zero holder balances."
-                />
-                <SummaryCard
-                  label="CSV format"
-                  value="3 columns"
-                  description="Exported as rank, address, and balance."
-                />
-              </div>
 
               <Card>
                 <CardHeader>

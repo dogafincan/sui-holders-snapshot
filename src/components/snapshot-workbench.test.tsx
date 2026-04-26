@@ -78,6 +78,18 @@ describe("SnapshotWorkbench", () => {
     expect(screen.getByText("Generate a new snapshot to refresh these results.")).toBeTruthy();
   });
 
+  it("does not render summary cards after a snapshot", async () => {
+    const runSnapshotBatch = vi.fn().mockResolvedValue(snapshotBatch());
+    render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Generate snapshot" }));
+
+    expect(await screen.findByText("Snapshot results")).toBeTruthy();
+    expect(screen.queryByText("Holders")).toBeNull();
+    expect(screen.queryByText("Total balance")).toBeNull();
+    expect(screen.queryByText("CSV format")).toBeNull();
+  });
+
   it("can pause a multi-batch snapshot and offer to resume", async () => {
     const runSnapshotBatch = vi.fn().mockResolvedValueOnce(
       snapshotBatch({
