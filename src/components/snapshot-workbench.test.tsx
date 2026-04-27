@@ -149,14 +149,15 @@ describe("SnapshotWorkbench", () => {
     ).not.toContain("min-w-[32rem]");
   });
 
-  it("clears validation errors when the coin input changes", async () => {
+  it("shows a required coin type error for empty submissions and clears it on input", async () => {
     const runSnapshotBatch = vi.fn();
     const { container } = render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Generate snapshot" }));
 
-    expect(await screen.findByText("Check coin type")).toBeTruthy();
-    expect(screen.getByText("Enter a coin type in 0xPACKAGE::MODULE::TOKEN format.")).toBeTruthy();
+    expect(await screen.findByText("Coin type required")).toBeTruthy();
+    expect(screen.getByText("Enter a Sui coin type.")).toBeTruthy();
+    expect(screen.queryByText("Check coin type")).toBeNull();
     expect(container.querySelector('[data-hugeicon="validation-alert"]')).not.toBeNull();
 
     fireEvent.change(screen.getByLabelText("Coin address"), {
@@ -164,8 +165,20 @@ describe("SnapshotWorkbench", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("Check coin type")).toBeNull();
+      expect(screen.queryByText("Coin type required")).toBeNull();
     });
+  });
+
+  it("shows a format validation error for malformed coin types", async () => {
+    const runSnapshotBatch = vi.fn();
+    render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
+
+    enterCoinAddress("not-a-coin");
+    fireEvent.click(screen.getByRole("button", { name: "Generate snapshot" }));
+
+    expect(await screen.findByText("Check coin type")).toBeTruthy();
+    expect(screen.getByText("Use the coin type format 0xPACKAGE::MODULE::TOKEN.")).toBeTruthy();
+    expect(screen.queryByText("Coin type required")).toBeNull();
   });
 
   it("keeps existing results without warning when the coin input changes after a snapshot", async () => {

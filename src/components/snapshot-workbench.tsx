@@ -28,6 +28,7 @@ import { Item, ItemContent } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   buildSnapshotResult,
+  COIN_TYPE_REQUIRED_MESSAGE,
   toErrorMessage,
   type SnapshotBalanceRow,
   type SnapshotInput,
@@ -60,12 +61,26 @@ interface SnapshotRunState extends SnapshotProgress {
 const BATCH_PAUSE_MS = 1_500;
 const COIN_ADDRESS_PLACEHOLDER = "Enter a Sui coin type";
 
+interface FormError {
+  title: string;
+  description: string;
+}
+
 function formatInteger(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
 function formatCoinObjectProgress(value: number) {
   return `${formatInteger(value)} coin object${value === 1 ? "" : "s"} scanned`;
+}
+
+function getFormError(error: unknown): FormError {
+  const description = toErrorMessage(error);
+
+  return {
+    title: description === COIN_TYPE_REQUIRED_MESSAGE ? "Coin type required" : "Check coin type",
+    description,
+  };
 }
 
 function wait(ms: number, cancelWaitRef: { current: (() => void) | null }) {
@@ -160,7 +175,7 @@ function EmptyHolderTable() {
 export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunSnapshotBatch }) {
   const [coinAddress, setCoinAddress] = useState("");
   const [snapshot, setSnapshot] = useState<SnapshotResult | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<FormError | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [snapshotProgress, setSnapshotProgress] = useState<SnapshotProgress | null>(null);
   const [pausedRun, setPausedRun] = useState<SnapshotRunState | null>(null);
@@ -280,7 +295,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
         coinAddress,
       });
     } catch (error) {
-      setFormError(toErrorMessage(error));
+      setFormError(getFormError(error));
       return;
     }
 
@@ -369,8 +384,8 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
                 {formError ? (
                   <Alert variant="destructive">
                     <HugeiconsIcon icon={Alert02Icon} data-hugeicon="validation-alert" />
-                    <AlertTitle>Check coin type</AlertTitle>
-                    <AlertDescription>{formError}</AlertDescription>
+                    <AlertTitle>{formError.title}</AlertTitle>
+                    <AlertDescription>{formError.description}</AlertDescription>
                   </Alert>
                 ) : null}
 

@@ -4,6 +4,9 @@ const SUI_ADDRESS_PATTERN = /^(?:0x)?([0-9a-fA-F]{1,64})$/;
 const COIN_TYPE_PATTERN =
   /^(0x[0-9a-fA-F]{1,64})::([A-Za-z_][A-Za-z0-9_]*)::([A-Za-z_][A-Za-z0-9_]*)$/;
 
+export const COIN_TYPE_REQUIRED_MESSAGE = "Enter a Sui coin type.";
+export const COIN_TYPE_FORMAT_MESSAGE = "Use the coin type format 0xPACKAGE::MODULE::TOKEN.";
+
 export interface SnapshotMeta {
   endpoint: string;
   coinAddress: string;
@@ -63,7 +66,7 @@ export function normalizeCoinType(value: string) {
   const match = trimmed.match(COIN_TYPE_PATTERN);
 
   if (!match) {
-    throw new Error("Use the coin type format 0xPACKAGE::MODULE::TOKEN.");
+    throw new Error(COIN_TYPE_FORMAT_MESSAGE);
   }
 
   const [, packageAddress, moduleName, tokenName] = match;
@@ -73,7 +76,7 @@ export function normalizeCoinType(value: string) {
 const coinTypeSchema = z
   .string()
   .trim()
-  .min(1, "Enter a coin type in 0xPACKAGE::MODULE::TOKEN format.")
+  .min(1, COIN_TYPE_REQUIRED_MESSAGE)
   .superRefine((value, context) => {
     try {
       normalizeCoinType(value);

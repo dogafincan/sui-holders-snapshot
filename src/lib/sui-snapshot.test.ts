@@ -5,6 +5,8 @@ import {
   buildSnapshotCsv,
   buildSnapshotResult,
   compareDecimalAmounts,
+  COIN_TYPE_FORMAT_MESSAGE,
+  COIN_TYPE_REQUIRED_MESSAGE,
   formatUnits,
   normalizeDecimalAmount,
   normalizeCoinType,
@@ -17,9 +19,7 @@ const ADDRESS_A = `0x${"1".padStart(64, "0")}`;
 describe("sui snapshot helpers", () => {
   it("normalizes coin types", () => {
     expect(normalizeCoinType("0x2::sui::SUI")).toBe(`0x${"2".padStart(64, "0")}::sui::SUI`);
-    expect(() => normalizeCoinType("not-a-coin")).toThrow(
-      "Use the coin type format 0xPACKAGE::MODULE::TOKEN.",
-    );
+    expect(() => normalizeCoinType("not-a-coin")).toThrow(COIN_TYPE_FORMAT_MESSAGE);
   });
 
   it("formats decimal unit strings", () => {
@@ -43,6 +43,13 @@ describe("sui snapshot helpers", () => {
     ).toEqual({
       coinAddress: `0x${"2".padStart(64, "0")}::sui::SUI`,
     });
+
+    const missingCoinType = snapshotInputSchema.safeParse({
+      coinAddress: "",
+    });
+
+    expect(missingCoinType.success).toBe(false);
+    expect(missingCoinType.error?.issues[0]?.message).toBe(COIN_TYPE_REQUIRED_MESSAGE);
   });
 
   it("builds the canonical holder csv output", () => {
