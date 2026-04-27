@@ -43,7 +43,7 @@ Output:
 - preset `b1aIaos55` on `base-luma`
 - Tailwind CSS v4
 - Inter variable font
-- Hugeicons for preset-managed UI icons
+- Hugeicons for all UI icons
 - TanStack Table
 - Vite+
 
@@ -167,8 +167,12 @@ vp run cf-typegen
 - The UI is intentionally constrained to stock shadcn `base-luma` styling with the
   applied preset. The main snapshot area is a muted rounded workbench section
   containing shadcn cards, and the table summary uses the shadcn `Item` muted
-  variant. Prefer stock shadcn components and minimal layout classes.
+  variant. Current typography favors readable base-size card copy, semibold
+  section titles, and a strong page header. Prefer stock shadcn components and
+  minimal layout classes.
   Avoid non-shadcn decorative chrome or bespoke visual treatments.
+- Use Hugeicons for all UI icons. Do not add `lucide-react` or another icon
+  package for product UI.
 - The holders table is intentionally visible before a snapshot exists. Keep that
   initial state empty, without snapshot metadata, CSV controls, summary cards, or
   explanatory placeholder cards.

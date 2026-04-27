@@ -25,7 +25,7 @@ Core behavior:
 - shadcn preset `b1aIaos55` on `base-luma`
 - Tailwind CSS v4
 - Inter variable font
-- Hugeicons for preset-managed icons
+- Hugeicons for all UI icons
 - Cloudflare Workers via `@cloudflare/vite-plugin`
 
 ## Important Files
@@ -123,8 +123,11 @@ aligned with `wrangler.jsonc`.
   applied preset, Inter, and Base UI primitives. The snapshot controls and holder
   table live inside a muted rounded workbench section containing shadcn cards, and
   compact inner summaries should use the shadcn `Item` muted variant. Prefer
-  minimal layout classes and avoid non-shadcn decorative chrome or bespoke visual
-  styling.
+  readable base-size card copy, semibold section titles, and a strong page
+  header. Prefer minimal layout classes and avoid non-shadcn decorative chrome or
+  bespoke visual styling.
+- Use Hugeicons for all UI icons. Do not add `lucide-react` or another icon
+  package for product UI.
 
 ## Testing Expectations
 
