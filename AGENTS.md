@@ -32,9 +32,10 @@ Core behavior:
 
 - `src/routes/index.tsx`: app entry route
 - `src/routes/__root.tsx`: root document and global app shell
-- `src/components/snapshot-workbench.tsx`: page layout, form workflow, initial empty table, loading states, and results card
-- `src/components/holders-table.tsx`: static ranked holders table module with pagination
+- `src/components/snapshot-workbench.tsx`: page header, muted rounded workbench section, form workflow, initial empty table, loading states, and results card
+- `src/components/holders-table.tsx`: static ranked holders table module with muted holder summary item and pagination
 - `src/components/ui/field.tsx`: shadcn field composition for form structure
+- `src/components/ui/item.tsx`: shadcn item composition for muted inner content blocks
 - `src/lib/sui-snapshot.server.ts`: server-side snapshot execution
 - `src/lib/sui-snapshot.functions.ts`: TanStack Start server function wrapper
 - `src/lib/sui-snapshot.ts`: shared validation, formatting, and CSV helpers
@@ -69,6 +70,10 @@ Compatibility wrappers remain in `package.json`, but Vite+ commands are the
 primary workflow.
 
 Default local URL:
+
+- `http://localhost:5173`
+
+The npm compatibility wrapper `npm run dev` pins the dev server to:
 
 - `http://localhost:3000`
 
@@ -115,8 +120,11 @@ aligned with `wrangler.jsonc`.
   and task behavior in `vite.config.ts` instead of separate tool config files.
 - Use existing shadcn components before introducing custom primitives.
 - Preserve the current visual contract: stock shadcn `base-luma` styling with the
-  applied preset, Inter, and Base UI primitives. Prefer minimal layout classes and
-  avoid custom shells, decorative chrome, or bespoke visual styling.
+  applied preset, Inter, and Base UI primitives. The snapshot controls and holder
+  table live inside a muted rounded workbench section containing shadcn cards, and
+  compact inner summaries should use the shadcn `Item` muted variant. Prefer
+  minimal layout classes and avoid non-shadcn decorative chrome or bespoke visual
+  styling.
 
 ## Testing Expectations
 
