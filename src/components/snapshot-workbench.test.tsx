@@ -54,7 +54,7 @@ describe("SnapshotWorkbench", () => {
     const coinAddressInput = screen.getByLabelText("Coin address") as HTMLInputElement;
     const appTitle = screen.getByRole("heading", { level: 1, name: "Sui holders snapshot" });
     const appSubtitle = screen.getByText(
-      "Run a live holder snapshot and export the ranked holder list to CSV.",
+      "Generate a ranked holder list for a Sui coin type and export it as CSV.",
     );
 
     expect(appTitle.className).toContain("text-4xl");

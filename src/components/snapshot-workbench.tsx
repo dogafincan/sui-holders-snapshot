@@ -331,7 +331,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
       <header className="flex flex-col gap-2">
         <h1 className="text-4xl leading-tight font-bold tracking-tight">Sui holders snapshot</h1>
         <p className="max-w-full text-lg font-medium text-muted-foreground sm:max-w-3xl">
-          Run a live holder snapshot and export the ranked holder list to CSV.
+          Generate a ranked holder list for a Sui coin type and export it as CSV.
         </p>
       </header>
 
