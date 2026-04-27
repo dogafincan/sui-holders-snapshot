@@ -41,13 +41,21 @@ describe("SnapshotWorkbench", () => {
     const runSnapshotBatch = vi.fn();
     const { container } = render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
     const coinAddressInput = screen.getByLabelText("Coin address") as HTMLInputElement;
+    const appTitle = screen.getByRole("heading", { level: 1, name: "Sui holders snapshot" });
+    const appSubtitle = screen.getByText(
+      "Run a live holder snapshot and export the ranked holder list to CSV.",
+    );
 
+    expect(appTitle.className).toContain("text-4xl");
+    expect(appTitle.className).toContain("font-bold");
+    expect(appSubtitle.className).toContain("text-lg");
+    expect(appSubtitle.className).toContain("font-medium");
     expect(coinAddressInput.value).toBe("");
     expect(coinAddressInput.placeholder).toBe("Enter a Sui coin type");
     expect(screen.queryByText("Snapshot parameters")).toBeNull();
     expect(screen.queryByText("Inputs are normalized before the request is sent.")).toBeNull();
     expect(screen.queryByText("Ready to run")).toBeNull();
-    expect(container.querySelector(".lucide-camera")).not.toBeNull();
+    expect(container.querySelector('[data-hugeicon="generate-snapshot"]')).not.toBeNull();
   });
 
   it("renders an empty holder table before a snapshot is generated", () => {
@@ -60,6 +68,14 @@ describe("SnapshotWorkbench", () => {
     const workbenchSection = container.querySelector('[data-slot="snapshot-workbench"]');
     const tableCard = rankedHolders.closest('[data-slot="card"]');
     const holderSummaryItem = rankedHolders.closest('[data-slot="item"]');
+    const holderSummaryDescription = screen.getByText("0 holders across 1 page.");
+    const coinAddressLabel = screen.getByText("Coin address");
+    const coinAddressDescription = screen.getByText(/Use the format/);
+    const coinAddressInput = screen.getByLabelText("Coin address");
+    const generateButton = screen.getByRole("button", { name: "Generate snapshot" });
+    const form = generateButton.closest("form");
+    const coinAddressField = coinAddressInput.closest('[data-slot="field"]');
+    const coinAddressCopy = coinAddressLabel.closest('[data-slot="field-content"]');
 
     expect(rankedHolders).toBeTruthy();
     expect(workbenchSection?.className).toContain("bg-muted");
@@ -69,7 +85,20 @@ describe("SnapshotWorkbench", () => {
     expect(holderSummaryItem?.getAttribute("data-variant")).toBe("muted");
     expect(holderSummaryItem?.className).toContain("bg-muted/50");
     expect(holderSummaryItem?.className).toContain("rounded-2xl");
-    expect(screen.getByText("0 holders across 1 page.")).toBeTruthy();
+    expect(rankedHolders.className).toContain("text-base");
+    expect(rankedHolders.className).toContain("font-semibold");
+    expect(holderSummaryDescription.className).toContain("text-base");
+    expect(coinAddressLabel.className).toContain("text-base");
+    expect(coinAddressLabel.className).toContain("font-semibold");
+    expect(coinAddressDescription.className).toContain("text-base");
+    expect(coinAddressInput.className).toContain("text-base");
+    expect(coinAddressInput.className).not.toContain("md:text-sm");
+    expect(generateButton.className).toContain("text-base");
+    expect(generateButton.className).toContain("font-semibold");
+    expect(form?.className).toContain("gap-3");
+    expect(coinAddressField?.className).toContain("gap-5");
+    expect(coinAddressCopy?.className).toContain("gap-1");
+    expect(holderSummaryDescription).toBeTruthy();
     expect(screen.getByText("Rank")).toBeTruthy();
     expect(screen.getByText("Address")).toBeTruthy();
     expect(screen.getByText("Balance")).toBeTruthy();
@@ -100,7 +129,7 @@ describe("SnapshotWorkbench", () => {
 
     expect(await screen.findByText("Check coin type")).toBeTruthy();
     expect(screen.getByText("Enter a coin type in 0xPACKAGE::MODULE::TOKEN format.")).toBeTruthy();
-    expect(container.querySelector(".lucide-circle-alert")).not.toBeNull();
+    expect(container.querySelector('[data-hugeicon="validation-alert"]')).not.toBeNull();
 
     fireEvent.change(screen.getByLabelText("Coin address"), {
       target: { value: "0x2::sui::SUI" },

@@ -1,20 +1,27 @@
 import { startTransition, type FormEvent, useRef, useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Camera,
-  CircleAlert,
-  CircleStop,
-  Download,
-  LoaderCircle,
-  RotateCw,
-  Sparkles,
-} from "lucide-react";
+  Alert02Icon,
+  Camera01Icon,
+  Download04Icon,
+  Loading03Icon,
+  Refresh01Icon,
+  SparklesIcon,
+  StopCircleIcon,
+} from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 
 import { HoldersTable } from "@/components/holders-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -299,8 +306,8 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Sui holders snapshot</h1>
-        <p className="max-w-3xl text-muted-foreground">
+        <h1 className="text-4xl leading-tight font-bold tracking-tight">Sui holders snapshot</h1>
+        <p className="max-w-3xl text-lg font-medium text-muted-foreground">
           Run a live holder snapshot and export the ranked holder list to CSV.
         </p>
       </header>
@@ -311,13 +318,17 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
       >
         <Card className="h-fit lg:sticky lg:top-6">
           <CardContent>
-            <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+            <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
               <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="coin-address">Coin address</FieldLabel>
-                  <FieldDescription>
-                    Use the format <code>0xPACKAGE::MODULE::TOKEN</code>.
-                  </FieldDescription>
+                <Field className="gap-5">
+                  <FieldContent className="gap-1">
+                    <FieldLabel htmlFor="coin-address" className="text-base font-semibold">
+                      Coin address
+                    </FieldLabel>
+                    <FieldDescription className="text-base leading-normal">
+                      Use the format <code>0xPACKAGE::MODULE::TOKEN</code>.
+                    </FieldDescription>
+                  </FieldContent>
                   <Input
                     id="coin-address"
                     value={coinAddress}
@@ -330,7 +341,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
 
               {formError ? (
                 <Alert variant="destructive">
-                  <CircleAlert />
+                  <HugeiconsIcon icon={Alert02Icon} data-hugeicon="validation-alert" />
                   <AlertTitle>Check coin type</AlertTitle>
                   <AlertDescription>{formError}</AlertDescription>
                 </Alert>
@@ -338,7 +349,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
 
               {requestError ? (
                 <Alert variant="destructive">
-                  <Sparkles />
+                  <HugeiconsIcon icon={SparklesIcon} data-hugeicon="snapshot-failed" />
                   <AlertTitle>Snapshot failed</AlertTitle>
                   <AlertDescription>{requestError}</AlertDescription>
                 </Alert>
@@ -346,7 +357,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
 
               {pausedRun && !isSubmitting ? (
                 <Alert>
-                  <Sparkles />
+                  <HugeiconsIcon icon={SparklesIcon} data-hugeicon="snapshot-paused" />
                   <AlertTitle>Snapshot paused</AlertTitle>
                   <AlertDescription>
                     Resume from {formatCoinObjectProgress(pausedRun.objectsFetched)}.
@@ -358,14 +369,23 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
                 <Button type="submit" size="lg" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
-                      <LoaderCircle className="animate-spin" data-icon="inline-start" />
+                      <HugeiconsIcon
+                        icon={Loading03Icon}
+                        className="animate-spin"
+                        data-icon="inline-start"
+                        data-hugeicon="snapshot-loading"
+                      />
                       {snapshotProgress && snapshotProgress.pagesFetched > 0
                         ? formatCoinObjectProgress(snapshotProgress.objectsFetched)
                         : "Running snapshot"}
                     </>
                   ) : (
                     <>
-                      <Camera data-icon="inline-start" />
+                      <HugeiconsIcon
+                        icon={Camera01Icon}
+                        data-icon="inline-start"
+                        data-hugeicon="generate-snapshot"
+                      />
                       Generate snapshot
                     </>
                   )}
@@ -373,12 +393,20 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
 
                 {isSubmitting ? (
                   <Button type="button" variant="outline" onClick={handleCancelSnapshot}>
-                    <CircleStop data-icon="inline-start" />
+                    <HugeiconsIcon
+                      icon={StopCircleIcon}
+                      data-icon="inline-start"
+                      data-hugeicon="cancel-snapshot"
+                    />
                     Cancel snapshot
                   </Button>
                 ) : pausedRun ? (
                   <Button type="button" variant="outline" onClick={handleResumeSnapshot}>
-                    <RotateCw data-icon="inline-start" />
+                    <HugeiconsIcon
+                      icon={Refresh01Icon}
+                      data-icon="inline-start"
+                      data-hugeicon="resume-snapshot"
+                    />
                     Resume snapshot
                   </Button>
                 ) : null}
@@ -392,7 +420,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
             <>
               {hasStaleSnapshot ? (
                 <Alert>
-                  <Sparkles />
+                  <HugeiconsIcon icon={SparklesIcon} data-hugeicon="input-changed" />
                   <AlertTitle>Input changed</AlertTitle>
                   <AlertDescription>
                     Generate a new snapshot to refresh these results.
@@ -422,7 +450,11 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
                       className="w-full sm:w-auto lg:shrink-0"
                       onClick={handleDownload}
                     >
-                      <Download data-icon="inline-start" />
+                      <HugeiconsIcon
+                        icon={Download04Icon}
+                        data-icon="inline-start"
+                        data-hugeicon="download-csv"
+                      />
                       Download CSV
                     </Button>
                   </div>

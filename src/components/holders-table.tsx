@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   flexRender,
   getCoreRowModel,
@@ -7,7 +8,7 @@ import {
   type ColumnDef,
   type PaginationState,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft02Icon, ArrowRight02Icon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
@@ -119,7 +120,10 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="py-10 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={3}
+                  className="py-10 text-center text-base text-muted-foreground"
+                >
                   No holders to display.
                 </TableCell>
               </TableRow>
@@ -145,7 +149,11 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronLeft data-icon="inline-start" />
+            <HugeiconsIcon
+              icon={ArrowLeft02Icon}
+              data-icon="inline-start"
+              data-hugeicon="previous-page"
+            />
             Previous
           </Button>
           <Button
@@ -156,7 +164,11 @@ export function HoldersTable({ rows }: { rows: SnapshotRow[] }) {
             disabled={!table.getCanNextPage()}
           >
             Next
-            <ChevronRight data-icon="inline-end" />
+            <HugeiconsIcon
+              icon={ArrowRight02Icon}
+              data-icon="inline-end"
+              data-hugeicon="next-page"
+            />
           </Button>
         </div>
       </div>
