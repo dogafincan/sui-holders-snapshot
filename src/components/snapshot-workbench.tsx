@@ -3,12 +3,12 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
   Camera01Icon,
+  CancelCircleIcon,
   Download04Icon,
   Loading03Icon,
   PauseCircleIcon,
   Refresh01Icon,
   SparklesIcon,
-  StopCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 
@@ -416,7 +416,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
                   {isSubmitting ? (
                     <Button type="button" variant="outline" onClick={handleCancelSnapshot}>
                       <HugeiconsIcon
-                        icon={StopCircleIcon}
+                        icon={CancelCircleIcon}
                         data-icon="inline-start"
                         data-hugeicon="cancel-snapshot"
                       />

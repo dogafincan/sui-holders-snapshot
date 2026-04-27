@@ -274,6 +274,7 @@ describe("SnapshotWorkbench", () => {
     fireEvent.click(screen.getByRole("button", { name: "Generate snapshot" }));
 
     expect(await screen.findByText("1 coin object scanned")).toBeTruthy();
+    expect(container.querySelector('[data-hugeicon="cancel-snapshot"]')).not.toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel snapshot" }));
 
