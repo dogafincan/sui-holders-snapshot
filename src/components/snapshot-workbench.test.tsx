@@ -157,7 +157,7 @@ describe("SnapshotWorkbench", () => {
 
     expect(await screen.findByText("Coin type required")).toBeTruthy();
     expect(screen.getByText("Enter a Sui coin type.")).toBeTruthy();
-    expect(screen.queryByText("Check coin type")).toBeNull();
+    expect(screen.queryByText("Invalid coin type format")).toBeNull();
     expect(container.querySelector('[data-hugeicon="validation-alert"]')).not.toBeNull();
 
     fireEvent.change(screen.getByLabelText("Coin type"), {
@@ -176,8 +176,8 @@ describe("SnapshotWorkbench", () => {
     enterCoinAddress("not-a-coin");
     fireEvent.click(screen.getByRole("button", { name: "Generate snapshot" }));
 
-    expect(await screen.findByText("Check coin type")).toBeTruthy();
-    expect(screen.getByText("Use the coin type format 0xPACKAGE::MODULE::TOKEN.")).toBeTruthy();
+    expect(await screen.findByText("Invalid coin type format")).toBeTruthy();
+    expect(screen.getByText("Enter a coin type in 0xPACKAGE::MODULE::TOKEN format.")).toBeTruthy();
     expect(screen.queryByText("Coin type required")).toBeNull();
   });
 

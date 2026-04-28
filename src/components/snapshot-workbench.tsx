@@ -78,7 +78,10 @@ function getFormError(error: unknown): FormError {
   const description = toErrorMessage(error);
 
   return {
-    title: description === COIN_TYPE_REQUIRED_MESSAGE ? "Coin type required" : "Check coin type",
+    title:
+      description === COIN_TYPE_REQUIRED_MESSAGE
+        ? "Coin type required"
+        : "Invalid coin type format",
     description,
   };
 }
