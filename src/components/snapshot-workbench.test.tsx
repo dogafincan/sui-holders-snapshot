@@ -99,7 +99,7 @@ describe("SnapshotWorkbench", () => {
     expect(workbenchSection?.className).not.toContain("overflow-hidden");
     expect(workbenchSection?.className).toContain("min-w-0");
     expect(workbenchSection?.className).toContain("grid-cols-[minmax(0,1fr)]");
-    expect(workbenchSection?.className).toContain("rounded-[2rem]");
+    expect(workbenchSection?.className).toContain("rounded-[2.75rem]");
     expect(workbenchSection?.className).toContain("sm:rounded-[3rem]");
     expect(workbenchSection?.className).toContain("p-3");
     expect(workbenchSection?.className).toContain("sm:p-6");
