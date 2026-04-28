@@ -28,6 +28,19 @@ const config = defineConfig({
     tsconfigPaths: true,
     dedupe: ["react", "react-dom"],
   },
+  environments: {
+    // Avoid a dev-time SSR reload with mixed React optimizer versions when Vite discovers Devtools late.
+    client: {
+      optimizeDeps: {
+        include: ["@tanstack/react-devtools"],
+      },
+    },
+    ssr: {
+      optimizeDeps: {
+        include: ["@tanstack/react-devtools"],
+      },
+    },
+  },
   plugins: [
     ...(enableTanStackDevtools ? [devtools()] : []),
     ...(isVitest ? [] : [cloudflare({ viteEnvironment: { name: "ssr" } })]),
