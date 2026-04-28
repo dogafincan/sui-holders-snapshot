@@ -2,13 +2,13 @@ import { startTransition, type FormEvent, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
+  AlertCircleIcon,
   Camera01Icon,
   CancelCircleIcon,
   Download04Icon,
   Loading02Icon,
   PauseCircleIcon,
   Refresh01Icon,
-  SparklesIcon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 
@@ -66,6 +66,13 @@ interface FormError {
   description: string;
 }
 
+interface RequestError {
+  title: string;
+  description: string;
+}
+
+const INTERNAL_SERVER_ERROR_PATTERN = /^internal error;\s*reference\s*=/i;
+
 function formatInteger(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
@@ -82,6 +89,22 @@ function getFormError(error: unknown): FormError {
       description === COIN_TYPE_REQUIRED_MESSAGE
         ? "Coin type required"
         : "Invalid coin type format",
+    description,
+  };
+}
+
+function getRequestError(error: unknown): RequestError {
+  const description = toErrorMessage(error);
+
+  if (INTERNAL_SERVER_ERROR_PATTERN.test(description.trim())) {
+    return {
+      title: "Snapshot could not be generated",
+      description: "The snapshot service returned an internal error. Please try again.",
+    };
+  }
+
+  return {
+    title: "Snapshot could not be generated",
     description,
   };
 }
@@ -179,7 +202,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
   const [coinAddress, setCoinAddress] = useState("");
   const [snapshot, setSnapshot] = useState<SnapshotResult | null>(null);
   const [formError, setFormError] = useState<FormError | null>(null);
-  const [requestError, setRequestError] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<RequestError | null>(null);
   const [snapshotProgress, setSnapshotProgress] = useState<SnapshotProgress | null>(null);
   const [pausedRun, setPausedRun] = useState<SnapshotRunState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -274,11 +297,11 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
       });
       toast.success(`Loaded ${formatInteger(nextSnapshot.meta.holderCount)} holders.`);
     } catch (error) {
-      const message = toErrorMessage(error);
+      const nextRequestError = getRequestError(error);
       startTransition(() => {
-        setRequestError(message);
+        setRequestError(nextRequestError);
       });
-      toast.error(message);
+      toast.error(nextRequestError.description);
     } finally {
       cancelRequestedRef.current = false;
       cancelWaitRef.current = null;
@@ -394,9 +417,9 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
 
                 {requestError ? (
                   <Alert variant="destructive">
-                    <HugeiconsIcon icon={SparklesIcon} data-hugeicon="snapshot-failed" />
-                    <AlertTitle>Snapshot failed</AlertTitle>
-                    <AlertDescription>{requestError}</AlertDescription>
+                    <HugeiconsIcon icon={AlertCircleIcon} data-hugeicon="snapshot-failed" />
+                    <AlertTitle>{requestError.title}</AlertTitle>
+                    <AlertDescription>{requestError.description}</AlertDescription>
                   </Alert>
                 ) : null}
 

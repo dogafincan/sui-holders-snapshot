@@ -181,6 +181,24 @@ describe("SnapshotWorkbench", () => {
     expect(screen.queryByText("Coin type required")).toBeNull();
   });
 
+  it("shows a sanitized snapshot failure when the server returns an internal reference", async () => {
+    const runSnapshotBatch = vi
+      .fn()
+      .mockRejectedValue(new Error("internal error; reference = 35mj9ufrun4toju14itug1kg"));
+    const { container } = render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
+
+    enterCoinAddress();
+    fireEvent.click(screen.getByRole("button", { name: "Generate snapshot" }));
+
+    expect(await screen.findByText("Snapshot could not be generated")).toBeTruthy();
+    expect(
+      screen.getByText("The snapshot service returned an internal error. Please try again."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Snapshot failed")).toBeNull();
+    expect(screen.queryByText("internal error; reference = 35mj9ufrun4toju14itug1kg")).toBeNull();
+    expect(container.querySelector('[data-hugeicon="snapshot-failed"]')).not.toBeNull();
+  });
+
   it("keeps existing results without warning when the coin input changes after a snapshot", async () => {
     const runSnapshotBatch = vi.fn().mockResolvedValue(snapshotBatch());
     render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
