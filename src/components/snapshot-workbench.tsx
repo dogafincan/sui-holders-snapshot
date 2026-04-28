@@ -206,6 +206,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
   const [snapshotProgress, setSnapshotProgress] = useState<SnapshotProgress | null>(null);
   const [pausedRun, setPausedRun] = useState<SnapshotRunState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const cancelRequestedRef = useRef(false);
   const cancelWaitRef = useRef<(() => void) | null>(null);
 
@@ -213,6 +214,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
     setRequestError(null);
     setPausedRun(null);
     setIsSubmitting(true);
+    setIsCancelling(false);
     setSnapshotProgress({
       objectsFetched: initialState.objectsFetched,
       pagesFetched: initialState.pagesFetched,
@@ -306,6 +308,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
       cancelRequestedRef.current = false;
       cancelWaitRef.current = null;
       setIsSubmitting(false);
+      setIsCancelling(false);
       setSnapshotProgress(null);
     }
   }
@@ -345,6 +348,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
   }
 
   function handleCancelSnapshot() {
+    setIsCancelling(true);
     cancelRequestedRef.current = true;
     cancelWaitRef.current?.();
   }
@@ -455,13 +459,19 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
                   </Button>
 
                   {isSubmitting ? (
-                    <Button type="button" variant="outline" onClick={handleCancelSnapshot}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancelSnapshot}
+                      disabled={isCancelling}
+                    >
                       <HugeiconsIcon
-                        icon={CancelCircleIcon}
+                        icon={isCancelling ? Loading02Icon : CancelCircleIcon}
+                        className={isCancelling ? "animate-spin" : undefined}
                         data-icon="inline-start"
-                        data-hugeicon="cancel-snapshot"
+                        data-hugeicon={isCancelling ? "snapshot-cancelling" : "cancel-snapshot"}
                       />
-                      Cancel snapshot
+                      {isCancelling ? "Cancelling snapshot" : "Cancel snapshot"}
                     </Button>
                   ) : pausedRun ? (
                     <Button type="button" variant="outline" onClick={handleResumeSnapshot}>

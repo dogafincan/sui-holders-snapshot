@@ -320,4 +320,44 @@ describe("SnapshotWorkbench", () => {
       resumeButton.compareDocumentPosition(pausedAlert as Node) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
+
+  it("shows cancelling feedback while a cancellation is waiting for the active batch", async () => {
+    const deferredBatch = deferredSnapshotBatch();
+    const runSnapshotBatch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        snapshotBatch({
+          nextCursor: "cursor-1",
+        }),
+      )
+      .mockReturnValueOnce(deferredBatch.promise);
+    const { container } = render(<SnapshotWorkbench runSnapshotBatch={runSnapshotBatch} />);
+
+    enterCoinAddress();
+    fireEvent.click(screen.getByRole("button", { name: "Generate snapshot" }));
+
+    expect(await screen.findByText("1 coin object scanned")).toBeTruthy();
+    await waitFor(
+      () => {
+        expect(runSnapshotBatch).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 2_500 },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel snapshot" }));
+
+    const cancellingButton = await screen.findByRole("button", { name: "Cancelling snapshot" });
+    expect(cancellingButton.hasAttribute("disabled")).toBe(true);
+    expect(container.querySelector('[data-hugeicon="snapshot-cancelling"]')).not.toBeNull();
+    expect(screen.queryByText("Snapshot paused")).toBeNull();
+
+    deferredBatch.resolve(
+      snapshotBatch({
+        cursor: "cursor-1",
+        nextCursor: "cursor-2",
+      }),
+    );
+
+    expect(await screen.findByText("Snapshot paused")).toBeTruthy();
+  });
 });
