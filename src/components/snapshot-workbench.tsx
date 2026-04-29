@@ -376,7 +376,7 @@ export function SnapshotWorkbench({ runSnapshotBatch }: { runSnapshotBatch: RunS
       <header className="flex flex-col items-center gap-4 text-center md:flex-row md:gap-6 md:text-left">
         <div
           data-slot="app-logo"
-          className="relative size-20 shrink-0 overflow-hidden md:size-24"
+          className="relative size-15 shrink-0 overflow-hidden md:size-18"
           aria-hidden="true"
         >
           <img
